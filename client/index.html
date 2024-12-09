@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Chat Response Display</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .message {
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .message-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+      padding: 6px;
+      background-color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .message-role {
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .message-content {
+      margin-left: 44px;
+      white-space: pre-wrap;
+    }
+
+    .tool-call {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: monospace;
+    }
+
+    /* Role-specific styles */
+    .role-user {
+      background-color: #e3f2fd;
+    }
+
+    .role-assistant {
+      background-color: #e8f5e9;
+    }
+
+    .role-tool {
+      background-color: #fff3e0;
+    }
+
+    .role-system {
+      background-color: #f5f5f5;
+    }
+
+    /* Input area styles */
+    .input-area {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Chat Response Display</h1>
+    <div id="chat-messages">
+      <!-- Messages will be inserted here by JavaScript -->
+    </div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="Enter message">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    function getMessageIcon(role) {
+      switch (role) {
+        case 'user':
+          return '👤';
+        case 'assistant':
+          return '🤖';
+        case 'tool':
+          return '🔧';
+        default:
+          return '💻';
+      }
+    }
+
+    function createMessageElement(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message role-${message.role}`;
+
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'message-header';
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'message-icon';
+      iconDiv.textContent = getMessageIcon(message.role);
+
+      const roleSpan = document.createElement('span');
+      roleSpan.className = 'message-role';
+      roleSpan.textContent = message.role + (message.name ? ` (${message.name})` : '');
+
+      headerDiv.appendChild(iconDiv);
+      headerDiv.appendChild(roleSpan);
+      messageDiv.appendChild(headerDiv);
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+
+      if (message.content) {
+        contentDiv.textContent = message.content;
+      }
+
+      if (message.tool_calls) {
+        message.tool_calls.forEach(call => {
+          const toolCallDiv = document.createElement('div');
+          toolCallDiv.className = 'tool-call';
+          toolCallDiv.innerHTML = `
+                        <div>Function: ${call.function.name}</div>
+                        <div>Arguments: ${call.function.arguments}</div>
+                    `;
+          contentDiv.appendChild(toolCallDiv);
+        });
+      }
+
+      messageDiv.appendChild(contentDiv);
+      return messageDiv;
+    }
+
+    function displayConversation(conversation) {
+      const chatMessages = document.getElementById('chat-messages');
+      chatMessages.innerHTML = '';
+      conversation.forEach(message => {
+        chatMessages.appendChild(createMessageElement(message));
+      });
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value || 'Hello';
+
+      try {
+        const response = await fetch(`http://localhost:8000/?message=${encodeURIComponent(message)}`);
+        const conversation = await response.json();
+        console.log('Response:', response);
+
+        // Initialize with the conversation
+        displayConversation(conversation);
+
+        // Clear input
+        input.value = '';
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMessage = {
+          role: 'system',
+          content: 'Error: ' + error.message
+        };
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(createMessageElement(errorMessage));
+      }
+    }
+  </script>
+</body>
+
+</html>
