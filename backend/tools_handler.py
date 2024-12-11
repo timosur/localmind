@@ -29,44 +29,41 @@ async def handle_tool_call(tool_call, conversation_history, read_stream, write_s
     """
     tool_name = "unknown_tool"
     raw_arguments = {}
-
+    
     try:
-        # Handle object-style tool calls from both OpenAI and Ollama
-        if hasattr(tool_call, 'function') or (isinstance(tool_call, dict) and 'function' in tool_call):
-            # Get tool name and arguments based on format
-            if hasattr(tool_call, 'function'):
-                tool_name = tool_call.function.name
-                raw_arguments = tool_call.function.arguments
-            else:
-                tool_name = tool_call['function']['name']
-                raw_arguments = tool_call['function']['arguments']
-        else:
-            # Parse Llama's XML format from the last message
-            last_message = conversation_history[-1]["content"]
-            parsed_tool = parse_tool_response(last_message)
-            if not parsed_tool:
-                logging.debug("Unable to parse tool call from message")
-                return
-            
-            tool_name = parsed_tool["function"]
-            raw_arguments = parsed_tool["arguments"]
+        tool_name = tool_call.function.name
+        raw_arguments = tool_call.function.arguments
 
         # Parse the tool arguments
-        tool_args = json.loads(raw_arguments) if isinstance(raw_arguments, str) else raw_arguments
+        if raw_arguments is not None and raw_arguments != "":
+            tool_args = json.loads(raw_arguments) if isinstance(raw_arguments, str) else raw_arguments
+        else:
+            tool_args = {}
+        
+        logging.debug(f"Calling tool '{tool_name}' with arguments: {tool_args}")
         
         # Call the tool (no direct print here)
         tool_response = await send_call_tool(tool_name, tool_args, read_stream, write_stream)
+        
+        logging.debug(f"Tool '{tool_name}' Response: {tool_response}")
+        
+        if tool_response is None:
+            logging.debug(f"Tool '{tool_name}' did not return a response.")
+            raise Exception(f"Tool '{tool_name}' did not return a response.")
+        
         if tool_response.get("isError"):
             logging.debug(f"Error calling tool '{tool_name}': {tool_response.get('error')}")
-            return
+            raise Exception(f"Error calling tool '{tool_name}': {tool_response.get('error')}")
 
         # Format the tool response
         formatted_response = format_tool_response(tool_response.get("content", []))
         logging.debug(f"Tool '{tool_name}' Response: {formatted_response}")
 
+        tool_interaction_history = []
+
         # Update the conversation history with the tool call
         # Add the tool call itself (for OpenAI tracking)
-        conversation_history.append({
+        tool_interaction_history.append({
             "role": "assistant",
             "content": None,
             "tool_calls": [{
@@ -80,12 +77,14 @@ async def handle_tool_call(tool_call, conversation_history, read_stream, write_s
         })
 
         # Add the tool response to conversation history
-        conversation_history.append({
+        tool_interaction_history.append({
             "role": "tool",
             "name": tool_name,
             "content": formatted_response,
             "tool_call_id": f"call_{tool_name}"
         })
+        
+        return formatted_response, tool_interaction_history
 
     except json.JSONDecodeError:
         logging.debug(f"Error decoding arguments for tool '{tool_name}': {raw_arguments}")

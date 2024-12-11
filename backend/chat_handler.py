@@ -1,62 +1,70 @@
-# chat_handler.py
 from llm_client import LLMClient
 from tools_handler import handle_tool_call, convert_to_openai_tools, fetch_tools
 from system_prompt_generator import SystemPromptGenerator
-
 from rich import print
-from rich.panel import Panel
-from rich.markdown import Markdown
-import json
+import logging
+import asyncio
 
 
 async def send_chat_message(
     read_stream, write_stream, user_conversation_history=[], user_message=""
-) -> list:
-    """Enter chat mode with multi-call support for autonomous tool chaining."""
+):
+    """Process the conversation loop, handling tool calls and responses.
+    Yields different types of messages for streaming the conversation flow.
+
+    Types of yielded messages:
+    - message: User or assistant messages
+    - tool_call: Function calls made by the assistant
+    - tool_result: Results from tool executions
+    - content: Content responses from the assistant
+    """
     try:
         tools = await fetch_tools(read_stream, write_stream)
         if not tools:
-            print("[red]No tools available. Exiting chat mode.[/red]")
+            yield {"error": "No tools available"}
             return
 
         system_prompt = generate_system_prompt(tools)
         openai_tools = convert_to_openai_tools(tools)
-        client = LLMClient()
-        conversation_history = [
-            {"role": "system", "content": system_prompt},
-            *user_conversation_history,
-        ]
 
-        try:
-            # User panel in bold yellow
-            user_panel_text = user_message if user_message else "[No Message]"
-            print(Panel(user_panel_text, style="bold yellow", title="You"))
+        return await process_chat_message(
+            read_stream,
+            write_stream,
+            system_prompt,
+            openai_tools,
+            user_conversation_history,
+            user_message,
+        )
 
-            conversation_history.append({"role": "user", "content": user_message})
-            await process_conversation(
-                client,
-                conversation_history,
-                openai_tools,
-                read_stream,
-                write_stream,
-            )
-
-            return conversation_history
-
-        except Exception as e:
-            print(f"[red]Error processing message:[/red] {e}")
     except Exception as e:
-        print(f"[red]Error in chat mode:[/red] {e}")
+        logging.debug(e)
+        logging.debug(f"[red]Error in processing chat:[/red] {e}")
+        yield {"type": "error", "content": str(e)}
 
 
-async def process_conversation(
-    client, conversation_history, openai_tools, read_stream, write_stream
-) -> list:
-    """Process the conversation loop, handling tool calls and responses."""
+async def process_chat_message(
+    read_stream,
+    write_stream,
+    system_prompt,
+    openai_tools,
+    user_conversation_history,
+    user_message,
+):
+    client = LLMClient()
+    conversation_history = [
+        {"role": "system", "content": system_prompt},
+        *user_conversation_history,
+    ]
+
+    # Yield user message
+    yield {"type": "message", "role": "user", "content": user_message}
+
+    conversation_history.append({"role": "user", "content": user_message})
+
     while True:
+        # Process chat message
         completion = client.create_completion(
-            messages=conversation_history,
-            tools=openai_tools,
+            messages=conversation_history, tools=openai_tools
         )
 
         response_content = completion.get("response", "No response")
@@ -64,55 +72,38 @@ async def process_conversation(
 
         if tool_calls:
             for tool_call in tool_calls:
-                # Extract tool_name and raw_arguments as before
-                if hasattr(tool_call, "function"):
-                    tool_name = getattr(tool_call.function, "name", "unknown tool")
-                    raw_arguments = getattr(tool_call.function, "arguments", {})
-                elif isinstance(tool_call, dict) and "function" in tool_call:
-                    fn_info = tool_call["function"]
-                    tool_name = fn_info.get("name", "unknown tool")
-                    raw_arguments = fn_info.get("arguments", {})
-                else:
-                    tool_name = "unknown tool"
-                    raw_arguments = {}
+                yield {
+                    "type": "tool_call",
+                    "content": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments,
+                    },
+                }
 
-                # If raw_arguments is a string, try to parse it as JSON
-                if isinstance(raw_arguments, str):
-                    try:
-                        raw_arguments = json.loads(raw_arguments)
-                    except json.JSONDecodeError:
-                        # If it's not valid JSON, just display as is
-                        pass
-
-                # Now raw_arguments should be a dict or something we can pretty-print as JSON
-                tool_args_str = json.dumps(raw_arguments, indent=2)
-
-                tool_md = f"**Tool Call:** {tool_name}\n\n```json\n{tool_args_str}\n```"
-                print(
-                    Panel(
-                        Markdown(tool_md), style="bold magenta", title="Tool Invocation"
-                    )
-                )
-
-                await handle_tool_call(
+                formatted_response, tool_interaction_history = await handle_tool_call(
                     tool_call, conversation_history, read_stream, write_stream
                 )
+
+                yield {"type": "tool_call_response", "content": formatted_response}
+
+                # Append new history to the conversation
+                conversation_history.extend(tool_interaction_history)
+            logging.info(
+                "Continue to the next iteration of the while loop, further processing the conversation"
+            )
             continue
 
         # Assistant panel with Markdown
-        assistant_panel_text = response_content if response_content else "[No Response]"
-        print(
-            Panel(Markdown(assistant_panel_text), style="bold blue", title="Assistant")
-        )
         conversation_history.append({"role": "assistant", "content": response_content})
 
-        return conversation_history
+        yield {"type": "content", "content": response_content}
+
+        return
 
 
 def generate_system_prompt(tools):
     """
     Generate a concise system prompt for the assistant.
-
     This prompt is internal and not displayed to the user.
     """
     prompt_generator = SystemPromptGenerator()

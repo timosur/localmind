@@ -121,94 +121,127 @@
   </div>
 
   <script>
-    function getMessageIcon(role) {
-      switch (role) {
-        case 'user':
-          return '👤';
-        case 'assistant':
-          return '🤖';
-        case 'tool':
-          return '🔧';
-        default:
-          return '💻';
-      }
+    let ws;
+    let messageQueue = [];
+    let currentAssistantMessage = null;
+    
+    function connectWebSocket() {
+        ws = new WebSocket('ws://localhost:8000/ws');
+        
+        ws.onopen = () => {
+            console.log('Connected to WebSocket');
+            // Send any queued messages
+            while (messageQueue.length > 0) {
+                sendMessage(messageQueue.shift());
+            }
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleStreamMessage(data);
+        };
+        
+        ws.onclose = () => {
+            console.log('WebSocket closed. Trying to reconnect...');
+            setTimeout(connectWebSocket, 1000);
+        };
     }
-
-    function createMessageElement(message) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message role-${message.role}`;
-
-      const headerDiv = document.createElement('div');
-      headerDiv.className = 'message-header';
-
-      const iconDiv = document.createElement('div');
-      iconDiv.className = 'message-icon';
-      iconDiv.textContent = getMessageIcon(message.role);
-
-      const roleSpan = document.createElement('span');
-      roleSpan.className = 'message-role';
-      roleSpan.textContent = message.role + (message.name ? ` (${message.name})` : '');
-
-      headerDiv.appendChild(iconDiv);
-      headerDiv.appendChild(roleSpan);
-      messageDiv.appendChild(headerDiv);
-
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'message-content';
-
-      if (message.content) {
-        contentDiv.textContent = message.content;
-      }
-
-      if (message.tool_calls) {
-        message.tool_calls.forEach(call => {
-          const toolCallDiv = document.createElement('div');
-          toolCallDiv.className = 'tool-call';
-          toolCallDiv.innerHTML = `
-                        <div>Function: ${call.function.name}</div>
-                        <div>Arguments: ${call.function.arguments}</div>
-                    `;
-          contentDiv.appendChild(toolCallDiv);
-        });
-      }
-
-      messageDiv.appendChild(contentDiv);
-      return messageDiv;
+    
+    function handleStreamMessage(data) {
+        const chatMessages = document.getElementById('chat-messages');
+        
+        switch(data.type) {
+            case 'stream':
+                const content = data.content;
+                
+                switch(content.type) {
+                    case 'message':
+                        // Create new message element
+                        const messageElem = createMessageElement({
+                            role: content.role,
+                            content: content.content
+                        });
+                        chatMessages.appendChild(messageElem);
+                        break;
+                        
+                    case 'content':
+                        // Update or create assistant message
+                        if (!currentAssistantMessage) {
+                            currentAssistantMessage = createMessageElement({
+                                role: 'assistant',
+                                content: ''
+                            });
+                            chatMessages.appendChild(currentAssistantMessage);
+                        }
+                        const contentDiv = currentAssistantMessage.querySelector('.message-content');
+                        contentDiv.textContent += content.content;
+                        break;
+                        
+                    case 'tool_call':
+                        // Create tool call message
+                        const toolCallElem = createMessageElement({
+                            role: 'tool',
+                            tool_calls: content.content
+                        });
+                        chatMessages.appendChild(toolCallElem);
+                        break;
+                        
+                    case 'tool_result':
+                        // Create tool result message
+                        const toolResultElem = createMessageElement({
+                            role: 'tool',
+                            content: content.content
+                        });
+                        chatMessages.appendChild(toolResultElem);
+                        break;
+                }
+                break;
+                
+            case 'error':
+                const errorElem = createMessageElement({
+                    role: 'system',
+                    content: `Error: ${data.content}`
+                });
+                chatMessages.appendChild(errorElem);
+                break;
+        }
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-
-    function displayConversation(conversation) {
-      const chatMessages = document.getElementById('chat-messages');
-      chatMessages.innerHTML = '';
-      conversation.forEach(message => {
-        chatMessages.appendChild(createMessageElement(message));
-      });
-    }
-
+    
     async function sendMessage() {
-      const input = document.getElementById('messageInput');
-      const message = input.value || 'Hello';
-
-      try {
-        const response = await fetch(`http://localhost:8000/?message=${encodeURIComponent(message)}`);
-        const conversation = await response.json();
-        console.log('Response:', response);
-
-        // Initialize with the conversation
-        displayConversation(conversation);
-
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            messageQueue.push(message);
+            connectWebSocket();
+            return;
+        }
+        
+        // Reset current assistant message
+        currentAssistantMessage = null;
+        
         // Clear input
         input.value = '';
-      } catch (error) {
-        console.error('Error:', error);
-        const errorMessage = {
-          role: 'system',
-          content: 'Error: ' + error.message
-        };
-        const chatMessages = document.getElementById('chat-messages');
-        chatMessages.appendChild(createMessageElement(errorMessage));
-      }
+        
+        // Send message
+        ws.send(message);
     }
-  </script>
+    
+    // Connect WebSocket when page loads
+    connectWebSocket();
+    
+    // Add enter key support
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    </script>
 </body>
 
 </html>

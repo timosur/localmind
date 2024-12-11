@@ -2,7 +2,7 @@ import os
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 import logging
-from typing import Dict, Any, List
+from typing import Dict, List
 
 # Load environment variables
 load_dotenv()
@@ -19,9 +19,9 @@ class LLMClient:
 
     def create_completion(
         self, messages: List[Dict], tools: List = None
-    ) -> Dict[str, Any]:
-        """Handle OpenAI chat completions."""
-        # get the openai client
+    ):
+        """Handle OpenAI chat completions."""# get the openai client
+        
         client = AzureOpenAI(
             api_key=self.api_key,
             azure_endpoint="https://renewables-openai-v3.openai.azure.com",
