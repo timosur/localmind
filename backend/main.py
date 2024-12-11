@@ -1,12 +1,9 @@
 import logging
-import sys
-import anyio
 from config import load_config
 from messages.send_initialize_message import send_initialize
 from chat_handler import send_chat_message
 from transport.stdio.stdio_client import stdio_client
 from fastapi import FastAPI, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import asyncio
 

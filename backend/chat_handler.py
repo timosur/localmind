@@ -1,9 +1,7 @@
 from llm_client import LLMClient
 from tools_handler import handle_tool_call, convert_to_openai_tools, fetch_tools
 from system_prompt_generator import SystemPromptGenerator
-from rich import print
 import logging
-import asyncio
 
 
 async def send_chat_message(
