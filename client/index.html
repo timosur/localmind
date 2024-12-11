@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Chat Response Display</title>
+  <title>MCP Standalone Chat</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -181,12 +181,12 @@
                         // Create tool call message
                         const toolCallElem = createMessageElement({
                             role: 'tool',
-                            tool_calls: content.content
+                            tool_call: content.content
                         });
                         chatMessages.appendChild(toolCallElem);
                         break;
                         
-                    case 'tool_result':
+                    case 'tool_call_response':
                         // Create tool result message
                         const toolResultElem = createMessageElement({
                             role: 'tool',
@@ -208,6 +208,51 @@
         
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function getMessageIcon(role) {
+      switch (role) {
+        case 'user':
+          return '👤';
+        case 'assistant':
+          return '🤖';
+        case 'tool':
+          return '🔧';
+        default:
+          return '💻';
+      }
+    }
+
+    function createMessageElement(message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message role-${message.role}`;
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'message-header';
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'message-icon';
+      iconDiv.textContent = getMessageIcon(message.role);
+      const roleSpan = document.createElement('span');
+      roleSpan.className = 'message-role';
+      roleSpan.textContent = message.role + (message.name ? ` (${message.name})` : '');
+      headerDiv.appendChild(iconDiv);
+      headerDiv.appendChild(roleSpan);
+      messageDiv.appendChild(headerDiv);
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      if (message.content) {
+        contentDiv.textContent = message.content;
+      }
+      if (message.tool_call) {
+        const toolCallDiv = document.createElement('div');
+        toolCallDiv.className = 'tool-call';
+        toolCallDiv.innerHTML = `
+                      <div>Function: ${message.tool_call.name}</div>
+                      <div>Arguments: ${message.tool_call.arguments}</div>
+                  `;
+        contentDiv.appendChild(toolCallDiv);
+      }
+      messageDiv.appendChild(contentDiv);
+      return messageDiv;
     }
     
     async function sendMessage() {

@@ -25,14 +25,15 @@ async def send_chat_message(
         system_prompt = generate_system_prompt(tools)
         openai_tools = convert_to_openai_tools(tools)
 
-        return await process_chat_message(
+        async for msg in process_chat_message(
             read_stream,
             write_stream,
             system_prompt,
             openai_tools,
             user_conversation_history,
             user_message,
-        )
+        ):
+            yield msg
 
     except Exception as e:
         logging.debug(e)
