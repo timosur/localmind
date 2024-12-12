@@ -13,9 +13,19 @@
   "files": [
     "dist"
   ],
+  "pkg": {
+    "scripts": "dist/**/*.js",
+    "targets": [
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-win-x64"
+    ],
+    "outputPath": "bin"
+  },
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",
     "prepare": "npm run build",
+    "package": "pkg .",
     "watch": "tsc --watch"
   },
   "dependencies": {
@@ -29,6 +39,7 @@
     "@types/diff": "^5.0.9",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^20.11.0",
+    "pkg": "^5.8.1",
     "shx": "^0.3.4",
     "typescript": "^5.3.3"
   }

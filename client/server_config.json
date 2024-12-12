@@ -1,17 +1,10 @@
 {
   "mcpServers": {
-    "sqlite": {
-      "command": "uvx",
-      "args": [
-        "mcp-server-sqlite",
-        "--db-path",
-        "test.db"
-      ]
-    },
     "filesystem": {
-      "command": "../filesystem-rag/main",
+      "command": "node",
       "args": [
-        "/Users/timosur/code/standalone-mcp-chat"
+        "../filesystem-rag/dist/index.js",
+        "/users/timosur/code/mcp"
       ]
     }
   }

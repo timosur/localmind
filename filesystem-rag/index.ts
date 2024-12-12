@@ -35,7 +35,7 @@ function expandHome(filepath: string): string {
 }
 
 // Store allowed directories in normalized form
-const allowedDirectories = args.map(dir => 
+const allowedDirectories = args.map(dir =>
   normalizePath(path.resolve(expandHome(dir)))
 );
 
@@ -59,7 +59,7 @@ async function validatePath(requestedPath: string): Promise<string> {
   const absolute = path.isAbsolute(expandedPath)
     ? path.resolve(expandedPath)
     : path.resolve(process.cwd(), expandedPath);
-    
+
   const normalizedRequested = normalizePath(absolute);
 
   // Check if path is within allowed directories
@@ -237,7 +237,7 @@ function createUnifiedDiff(originalContent: string, newContent: string, filepath
   // Ensure consistent line endings for diff
   const normalizedOriginal = normalizeLineEndings(originalContent);
   const normalizedNew = normalizeLineEndings(newContent);
-  
+
   return createTwoFilesPatch(
     filepath,
     filepath,
@@ -250,38 +250,38 @@ function createUnifiedDiff(originalContent: string, newContent: string, filepath
 
 async function applyFileEdits(
   filePath: string,
-  edits: Array<{oldText: string, newText: string}>,
+  edits: Array<{ oldText: string, newText: string }>,
   dryRun = false
 ): Promise<string> {
   // Read file content and normalize line endings
   const content = normalizeLineEndings(await fs.readFile(filePath, 'utf-8'));
-  
+
   // Apply edits sequentially
   let modifiedContent = content;
   for (const edit of edits) {
     const normalizedOld = normalizeLineEndings(edit.oldText);
     const normalizedNew = normalizeLineEndings(edit.newText);
-    
+
     // If exact match exists, use it
     if (modifiedContent.includes(normalizedOld)) {
       modifiedContent = modifiedContent.replace(normalizedOld, normalizedNew);
       continue;
     }
-    
+
     // Otherwise, try line-by-line matching with flexibility for whitespace
     const oldLines = normalizedOld.split('\n');
     const contentLines = modifiedContent.split('\n');
     let matchFound = false;
-    
+
     for (let i = 0; i <= contentLines.length - oldLines.length; i++) {
       const potentialMatch = contentLines.slice(i, i + oldLines.length);
-      
+
       // Compare lines with normalized whitespace
       const isMatch = oldLines.every((oldLine, j) => {
         const contentLine = potentialMatch[j];
         return oldLine.trim() === contentLine.trim();
       });
-      
+
       if (isMatch) {
         // Preserve original indentation of first line
         const originalIndent = contentLines[i].match(/^\s*/)?.[0] || '';
@@ -296,33 +296,33 @@ async function applyFileEdits(
           }
           return line;
         });
-        
+
         contentLines.splice(i, oldLines.length, ...newLines);
         modifiedContent = contentLines.join('\n');
         matchFound = true;
         break;
       }
     }
-    
+
     if (!matchFound) {
       throw new Error(`Could not find exact match for edit:\n${edit.oldText}`);
     }
   }
-  
+
   // Create unified diff
   const diff = createUnifiedDiff(content, modifiedContent, filePath);
-  
+
   // Format diff with appropriate number of backticks
   let numBackticks = 3;
   while (diff.includes('`'.repeat(numBackticks))) {
     numBackticks++;
   }
   const formattedDiff = `${'`'.repeat(numBackticks)}diff\n${diff}${'`'.repeat(numBackticks)}\n\n`;
-  
+
   if (!dryRun) {
     await fs.writeFile(filePath, modifiedContent, 'utf-8');
   }
-  
+
   return formattedDiff;
 }
 
@@ -413,7 +413,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "list_allowed_directories",
-        description: 
+        description:
           "Returns the list of directories that this server is allowed to access. " +
           "Use this to understand which directories are available before trying to access files.",
         inputSchema: {
@@ -438,6 +438,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid arguments for read_file: ${parsed.error}`);
         }
         const validPath = await validatePath(parsed.data.path);
+
+        // check if document is a excel file
+        const ext = path.extname(validPath).toLowerCase();
+        if (ext === ".xlsx" || ext === ".xls") {
+          // call http://0.0.0.0:8000/convert?output_format=md with file attached to get markdown
+          const content = await fs.readFile(validPath);
+
+          const formData = new FormData();
+          const blob = new Blob([content]);
+          formData.append("file", blob, path.basename(validPath));
+
+          const response = await fetch("http://0.0.0.0:8001/convert?output_format=md", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to convert excel file to markdown: ${response.statusText}`);
+          }
+
+          const markdown = await response.text();
+          return {
+            content: [{ type: "text", text: markdown }],
+          };
+        }
+
         const content = await fs.readFile(validPath, "utf-8");
         return {
           content: [{ type: "text", text: content }],
@@ -484,7 +510,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid arguments for edit_file: ${parsed.error}`);
         }
         const validPath = await validatePath(parsed.data.path);
-        const result = await applyFileEdits(validPath, parsed.data.edits, parsed.data.dryRun);
+        const result = await applyFileEdits(validPath, (parsed as any).data.edits, parsed.data.dryRun);
         return {
           content: [{ type: "text", text: result }],
         };
@@ -550,9 +576,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const validPath = await validatePath(parsed.data.path);
         const info = await getFileStats(validPath);
         return {
-          content: [{ type: "text", text: Object.entries(info)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join("\n") }],
+          content: [{
+            type: "text", text: Object.entries(info)
+              .map(([key, value]) => `${key}: ${value}`)
+              .join("\n")
+          }],
         };
       }
 

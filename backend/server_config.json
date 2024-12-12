@@ -1,11 +1,10 @@
 {
   "mcpServers": {
     "filesystem": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/timosur/code/mcp/standalone-mcp-chat"
+        "../filesystem-rag/dist/index.js",
+        "/users/timosur/code/mcp"
       ]
     }
   }
