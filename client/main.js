@@ -19,7 +19,13 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 
   // Start the Python backend
-  pythonProcess = spawn('../backend/dist/main');
+  // If development, use the Python script in the parent directory
+  // If production, use the Python script in the resources directory
+  if (process.env.NODE_ENV === 'development') {
+    pythonProcess = spawn('../.venv/bin/python3', ['../backend/main.py']);
+  } else {
+    pythonProcess = spawn('../backend/dist/main');
+  }
 
   pythonProcess.stdout.on('data', (data) => {
     console.log(`Python backend: ${data}`);

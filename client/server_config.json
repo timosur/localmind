@@ -9,10 +9,8 @@
       ]
     },
     "filesystem": {
-      "command": "npx",
+      "command": "../filesystem-rag/main",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
         "/Users/timosur/code/standalone-mcp-chat"
       ]
     }
