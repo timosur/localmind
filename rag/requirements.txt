@@ -1,0 +1,8 @@
+mcp
+httpx
+unstructured 
+langchain 
+langchain-text-splitters
+langchain-community
+pypdf
+werkzeug
