@@ -92,6 +92,8 @@ async def run():
         },
       )
 
+      print(result)
+
       """
             Other example calls include:
 
