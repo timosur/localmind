@@ -1,6 +1,8 @@
 import os
+import json
 
 from mcp import Tool
+from mcp.types import TextContent
 
 TOOL_SCHEMA = Tool(
   name="get_file_info",
@@ -28,11 +30,18 @@ def get_file_info(arguments: dict) -> dict:
 
   file_info = os.stat(file_path)
 
-  return {
-    "size": file_info.st_size,
-    "creationTime": file_info.st_ctime,
-    "lastModifiedTime": file_info.st_mtime,
-    "permissions": oct(file_info.st_mode & 0o777),
-    "type": "file" if os.path.isfile(file_path) else "directory",
-    "extension": os.path.splitext(file_path)[1],
-  }
+  return [
+    TextContent(
+      type="text",
+      text=json.dumps(
+        {
+          "path": file_path,
+          "size": file_info.st_size,
+          "creation_time": file_info.st_ctime,
+          "last_modified_time": file_info.st_mtime,
+          "permissions": oct(file_info.st_mode),
+          "type": "file" if os.path.isfile(file_path) else "directory",
+        }
+      ),
+    )
+  ]

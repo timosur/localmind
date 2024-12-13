@@ -30,21 +30,56 @@ TOOL_SCHEMA = Tool(
 
 
 def search_files(arguments):
-  directory_path = arguments["path"]
-  pattern = arguments["pattern"]
-  exclude_patterns = arguments.get("excludePatterns", [])
+  """
+  Search for files in a directory matching a pattern while excluding specified patterns.
 
-  # Search for files
-  matching_files = []
+  Args:
+      arguments: Dictionary containing:
+          - path: Base directory to search in
+          - pattern: Regex pattern to match files
+          - excludePatterns: List of patterns to exclude (optional)
 
-  for root, _, files in os.walk(directory_path):
-    for file in files:
-      full_path = os.path.join(root, file)
+  Returns:
+      List of full file paths that match the criteria
 
-      # Check if the file matches the pattern
-      if all(
-        exclude_pattern not in full_path for exclude_pattern in exclude_patterns
-      ) and re.search(pattern, file, re.IGNORECASE):
-        matching_files.append(full_path)
+  Raises:
+      ValueError: If path doesn't exist or pattern is invalid
+      TypeError: If arguments are of incorrect type
+  """
+  try:
+    directory_path = str(arguments["path"])
+    pattern = str(arguments["pattern"])
+    exclude_patterns = arguments.get("excludePatterns", [])
 
-  return matching_files
+    if not os.path.exists(directory_path):
+      raise ValueError(f"Directory not found: {directory_path}")
+
+    # Validate pattern
+    try:
+      re.compile(pattern)
+    except re.error as e:
+      raise ValueError(f"Invalid regex pattern: {str(e)}")
+
+    # Search for files
+    matching_files = []
+
+    for root, _, files in os.walk(directory_path):
+      for file in files:
+        full_path = os.path.join(root, file)
+
+        # Check if file should be excluded
+        should_exclude = any(
+          re.search(exclude_pattern, full_path, re.IGNORECASE)
+          for exclude_pattern in exclude_patterns
+        )
+
+        # Check if file matches pattern
+        if not should_exclude and re.search(pattern, file, re.IGNORECASE):
+          matching_files.append(full_path)
+
+    return matching_files
+
+  except KeyError as e:
+    raise ValueError(f"Missing required argument: {str(e)}")
+  except TypeError as e:
+    raise TypeError(f"Invalid argument type: {str(e)}")

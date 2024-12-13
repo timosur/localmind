@@ -1,6 +1,8 @@
 import os
+import json
 
 from mcp import Tool
+from mcp.types import TextContent
 
 TOOL_SCHEMA = Tool(
   name="list_directory",
@@ -19,9 +21,18 @@ finding specific files within a directory. Only works within allowed directories
 def list_directory(arguments: dict) -> dict:
   """List the contents of a directory."""
   path = arguments["path"]
-  return {
-    "contents": [
-      f"[DIR] {d}" if os.path.isdir(os.path.join(path, d)) else f"[FILE] {d}"
-      for d in os.listdir(path)
-    ]
-  }
+
+  contents = []
+
+  for item in os.listdir(path):
+    if os.path.isdir(os.path.join(path, item)):
+      contents.append(f"[DIR] {item}")
+    else:
+      contents.append(f"[FILE] {item}")
+
+  return [
+    TextContent(
+      type="text",
+      text=json.dumps(contents, indent=2),
+    )
+  ]

@@ -3,26 +3,24 @@ from mcp import Tool
 
 from rag_tools.embed import embed_file
 
-TOOL_SCHEMA = (
-  Tool(
-    name="load_split_embed_files",
-    description="Load, split and embed files into a vector database. This tool is useful for "
-    + "embedding files into a vector database. The tool accepts a list "
-    + "of file paths. The files are read, split into chunks, and embedded into a vector database. "
-    + "The tool returns an vector_collection_id for the embedded files and a result array of those embeddings. You can use the vector_collection_id "
-    + "to query those files for retrieving relevant splits using the 'query_embedded_files' tool.",
-    inputSchema={
-      "type": "object",
-      "properties": {
-        "files": {
-          "type": "array",
-          "items": {"type": "string"},
-          "description": "List of file paths",
-        }
-      },
-      "required": ["files"],
+TOOL_SCHEMA = Tool(
+  name="load_split_embed_files",
+  description="Load, split and embed files into a vector database. This tool is useful for "
+  + "embedding files into a vector database. The tool accepts a list "
+  + "of file paths. The files are read, split into chunks, and embedded into a vector database. "
+  + "The tool returns an vector_collection_id for the embedded files and a result array of those embeddings. You can use the vector_collection_id "
+  + "to query those files for retrieving relevant splits using the 'query_embedded_files' tool.",
+  inputSchema={
+    "type": "object",
+    "properties": {
+      "files": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of file paths",
+      }
     },
-  ),
+    "required": ["files"],
+  },
 )
 
 
