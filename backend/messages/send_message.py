@@ -10,7 +10,7 @@ async def send_message(
     write_stream: MemoryObjectSendStream,
     method: str,
     params: dict = None,
-    timeout: float = 5,
+    timeout: float = 500,
     message_id: str = None,
     retries: int = 3,
 ) -> dict:
@@ -53,14 +53,18 @@ async def send_message(
 
         except TimeoutError:
             # timeout
-            logging.error(f"Timeout waiting for response to method '{method}' (Attempt {attempt}/{retries})")
+            logging.error(
+                f"Timeout waiting for response to method '{method}' (Attempt {attempt}/{retries})"
+            )
             if attempt == retries:
                 raise
         except Exception as e:
             # exception
-            logging.error(f"Unexpected error during '{method}' request: {e} (Attempt {attempt}/{retries})")
+            logging.error(
+                f"Unexpected error during '{method}' request: {e} (Attempt {attempt}/{retries})"
+            )
             if attempt == retries:
                 raise
-        
+
         # Delay before retrying
-        await anyio.sleep(2)  
+        await anyio.sleep(2)
