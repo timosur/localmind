@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "filesystem": {
-      "command": "node",
+      "command": "../rag/.venv/bin/python3",
       "args": [
-        "../filesystem-rag/dist/index.js",
+        "../rag/main.py",
         "/users/timosur/code/mcp"
       ]
     }

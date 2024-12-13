@@ -1,5 +1,7 @@
 from mcp import Tool
 
+from rag_tools.query import query
+
 TOOL_SCHEMA = Tool(
   name="query_embedded_files",
   description="Query embedded files from a vector database. This tool is useful for querying "
@@ -8,11 +10,14 @@ TOOL_SCHEMA = Tool(
   inputSchema={
     "type": "object",
     "properties": {
-      "file_ids": {
-        "type": "array",
-        "items": {"type": "string"},
+      "vector_collection_id": {
+        "type": "string",
         "description": "List of file IDs",
-      }
+      },
+      "query": {
+        "type": "string",
+        "description": "Query string",
+      },
     },
     "required": ["file_ids"],
   },
@@ -21,4 +26,9 @@ TOOL_SCHEMA = Tool(
 
 def query_embedded_files(arguments: dict) -> dict:
   """Query embedded files."""
-  file_ids = arguments["file_ids"]
+  vector_collection_id = arguments["vector_collection_id"]
+  user_query = arguments["query"]
+
+  response = query(vector_collection_id, user_query)
+
+  return response

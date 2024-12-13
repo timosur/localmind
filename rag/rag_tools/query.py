@@ -1,6 +1,6 @@
 import os
 
-from get_vector_db import get_vector_db
+from db.vector import get as get_vector_db
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_community.chat_models import ChatOllama
@@ -33,12 +33,12 @@ def get_prompt():
 
 
 # Main function to handle the query process
-def query(input):
+def query(vector_collection_id, input):
   if input:
     # Initialize the language model with the specified model name
     llm = ChatOllama(model=LLM_MODEL)
     # Get the vector database instance
-    db = get_vector_db()
+    db = get_vector_db(vector_collection_id)
     # Get the prompt templates
     QUERY_PROMPT, prompt = get_prompt()
 
