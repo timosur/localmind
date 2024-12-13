@@ -1,4 +1,5 @@
 from mcp import Tool
+from mcp.types import TextContent
 
 from rag_tools.query import query
 
@@ -31,4 +32,9 @@ def query_embedded_files(arguments: dict) -> dict:
 
   response = query(vector_collection_id, user_query)
 
-  return response
+  return [
+    TextContent(
+      type="text",
+      text=response,
+    ),
+  ]

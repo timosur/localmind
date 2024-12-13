@@ -6,3 +6,4 @@ langchain-text-splitters
 langchain-community
 pypdf
 werkzeug
+chromadb

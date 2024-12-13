@@ -1,5 +1,7 @@
+import json
 from uuid import uuid4
 from mcp import Tool
+from mcp.types import TextContent
 
 from rag_tools.embed import embed_file
 
@@ -34,4 +36,9 @@ def load_split_embed_files(arguments: dict) -> dict:
     embed_result = embed_file(vector_collection_id, file_path)
     result.append(embed_result)
 
-  return {"vector_collection_id": vector_collection_id, "result": result}
+  return [
+    TextContent(
+      type="text",
+      text=json.dumps({"vector_collection_id": vector_collection_id, "result": result}),
+    ),
+  ]

@@ -21,55 +21,76 @@ async def run():
       # The example server only supports prompt primitives:
 
       # List available prompts
-      print("##### list_tools #####")
-      tools = await session.list_tools()
+      # print("##### list_tools #####")
+      # tools = await session.list_tools()
 
-      print(tools)
+      # print(tools)
 
-      print("##### list_directory #####")
+      # print("##### list_directory #####")
+      # result = await session.call_tool(
+      #   "list_directory",
+      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
+      # )
+
+      # print(result)
+
+      # print("##### get_file_info #####")
+      # result = await session.call_tool(
+      #   "get_file_info",
+      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
+      # )
+
+      # print(result)
+
+      # print("##### list_allowed_directories #####")
+      # result = await session.call_tool(
+      #   "list_allowed_directories",
+      #   arguments={},
+      # )
+
+      # print(result)
+
+      # print("##### search_files #####")
+      # result = await session.call_tool(
+      #   "search_files",
+      #   arguments={
+      #     "pattern": ".py",
+      #     "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
+      #     "exclude_patterns": [
+      #       "tools",
+      #       "rag_tools",
+      #       "__pycache__",
+      #       ".venv",
+      #       "dist",
+      #       "build",
+      #       "node_modules",
+      #       "backend",
+      #     ],
+      #   },
+      # )
+
+      # print(result)
+
+      print("##### load_split_embed_files #####")
       result = await session.call_tool(
-        "list_directory",
-        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
-      )
-
-      print(result)
-
-      print("##### get_file_info #####")
-      result = await session.call_tool(
-        "get_file_info",
-        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
-      )
-
-      print(result)
-
-      print("##### list_allowed_directories #####")
-      result = await session.call_tool(
-        "list_allowed_directories",
-        arguments={},
-      )
-
-      print(result)
-
-      print("##### search_files #####")
-      result = await session.call_tool(
-        "search_files",
+        "load_split_embed_files",
         arguments={
-          "pattern": ".py",
-          "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
-          "exclude_patterns": [
-            "tools",
-            "rag_tools",
-            "__pycache__",
-            ".venv",
-            "dist",
-            "build",
-            "node_modules",
-            "backend",
+          "files": [
+            "/Users/timosur/code/mcp/standalone-mcp-chat/kurzanleitungen_pdfa.pdf",
           ],
         },
       )
 
       print(result)
+
+      print("##### query_embedded_files #####")
+      result = await session.call_tool(
+        "query_embedded_files",
+        arguments={
+          "query": "kurzanleitung",
+          "vector_collection_id": "e018c498c7584de0a0d4e737198fc14f",
+        },
+      )
 
       """
             Other example calls include:

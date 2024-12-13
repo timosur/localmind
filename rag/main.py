@@ -23,6 +23,9 @@ from tools.load_split_embed_files import (
 from tools.load_split_embed_files import load_split_embed_files
 from tools.search_files import TOOL_SCHEMA as SEARCH_FILES_TOOL_SCHEMA
 from tools.search_files import search_files
+from tools.query_embedded_files import TOOL_SCHEMA as QUERY_EMBEDDED_FILES_TOOL_SCHEMA
+from tools.query_embedded_files import query_embedded_files
+
 
 # Create a server instance
 server = Server("filesystem-rag")
@@ -43,6 +46,7 @@ async def list_tools() -> list[Tool]:
     SEARCH_FILES_TOOL_SCHEMA,
     LIST_ALLOWED_DIRECTORIES_TOOL_SCHEMA,
     LOAD_SPLIT_EMBED_FILES_TOOL_SCHEMA,
+    QUERY_EMBEDDED_FILES_TOOL_SCHEMA,
   ]
 
 
@@ -63,6 +67,8 @@ async def call_tool(
         return list_allowed_directories(arguments, allowed_directories)
       case "load_split_embed_files":
         return load_split_embed_files(arguments)
+      case "query_embedded_files":
+        return query_embedded_files(arguments)
       case _:
         raise ValueError(f"Unknown tool: {name}")
   except Exception as e:
