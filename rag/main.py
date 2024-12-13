@@ -1,4 +1,6 @@
 import asyncio
+import os
+import sys
 from collections.abc import Sequence
 from typing import Any
 
@@ -24,6 +26,12 @@ from tools.search_files import search_files
 
 # Create a server instance
 server = Server("filesystem-rag")
+
+# Parse allowed directories from command line arguments
+allowed_directories = []
+
+if len(sys.argv) > 1:
+  allowed_directories = sys.argv[1:]
 
 
 @server.list_tools()
@@ -52,7 +60,7 @@ async def call_tool(
       case "search_files":
         return search_files(arguments)
       case "list_allowed_directories":
-        return list_allowed_directories(arguments)
+        return list_allowed_directories(arguments, allowed_directories)
       case "load_split_embed_files":
         return load_split_embed_files(arguments)
       case _:

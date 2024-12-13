@@ -4,7 +4,10 @@ from mcp.client.stdio import stdio_client
 # Create server parameters for stdio connection
 server_params = StdioServerParameters(
   command="python3",  # Executable
-  args=["main.py"],  # Optional command line arguments
+  args=[
+    "main.py",
+    "/Users/timosur/code/mcp/standalone-mcp-chat",
+  ],  # Optional command line arguments
   env=None,  # Optional environment variables
 )
 
@@ -35,6 +38,35 @@ async def run():
       result = await session.call_tool(
         "get_file_info",
         arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
+      )
+
+      print(result)
+
+      print("##### list_allowed_directories #####")
+      result = await session.call_tool(
+        "list_allowed_directories",
+        arguments={},
+      )
+
+      print(result)
+
+      print("##### search_files #####")
+      result = await session.call_tool(
+        "search_files",
+        arguments={
+          "pattern": ".py",
+          "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
+          "exclude_patterns": [
+            "tools",
+            "rag_tools",
+            "__pycache__",
+            ".venv",
+            "dist",
+            "build",
+            "node_modules",
+            "backend",
+          ],
+        },
       )
 
       print(result)

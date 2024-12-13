@@ -2,6 +2,7 @@ import os
 import re
 
 from mcp import Tool
+from mcp.types import TextContent
 
 TOOL_SCHEMA = Tool(
   name="search_files",
@@ -18,7 +19,7 @@ TOOL_SCHEMA = Tool(
         "type": "string",
         "description": "Pattern to search for",
       },
-      "excludePatterns": {
+      "exclude_patterns": {
         "type": "array",
         "items": {"type": "string"},
         "description": "Patterns to exclude",
@@ -49,7 +50,7 @@ def search_files(arguments):
   try:
     directory_path = str(arguments["path"])
     pattern = str(arguments["pattern"])
-    exclude_patterns = arguments.get("excludePatterns", [])
+    exclude_patterns = arguments.get("exclude_patterns", [])
 
     if not os.path.exists(directory_path):
       raise ValueError(f"Directory not found: {directory_path}")
@@ -75,11 +76,14 @@ def search_files(arguments):
 
         # Check if file matches pattern
         if not should_exclude and re.search(pattern, file, re.IGNORECASE):
-          matching_files.append(full_path)
+          matching_files.append(TextContent(type="text", text=str(full_path)))
+
+    if not matching_files:
+      return [TextContent(type="text", text="No files found")]
 
     return matching_files
 
   except KeyError as e:
-    raise ValueError(f"Missing required argument: {str(e)}")
+    return [TextContent(type="text", text=f"Missing argument: {str(e)}")]
   except TypeError as e:
-    raise TypeError(f"Invalid argument type: {str(e)}")
+    return [TextContent(type="text", text=f"Invalid argument type: {str(e)}")]

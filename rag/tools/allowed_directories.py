@@ -1,4 +1,5 @@
 from mcp import Tool
+from mcp.types import TextContent
 
 TOOL_SCHEMA = Tool(
   name="list_allowed_directories",
@@ -12,8 +13,10 @@ Use this to understand which directories are available before trying to access f
 )
 
 
-def list_allowed_directories(arguments: dict) -> list[str]:
+def list_allowed_directories(arguments: dict, allowed_directories) -> list[str]:
   """List allowed directories."""
   return [
-    "/",
+    TextContent(
+      type="text", text="Allowed directories:\n" + "\n".join(allowed_directories)
+    )
   ]
