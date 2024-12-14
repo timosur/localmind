@@ -17,11 +17,9 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("The OPENAI_API_KEY environment variable is not set.")
 
-    def create_completion(
-        self, messages: List[Dict], tools: List = None
-    ):
-        """Handle OpenAI chat completions."""# get the openai client
-        
+    def create_completion(self, messages: List[Dict], tools: List = None):
+        """Handle OpenAI chat completions."""  # get the openai client
+
         client = AzureOpenAI(
             api_key=self.api_key,
             azure_endpoint="https://renewables-openai-v3.openai.azure.com",

@@ -18,58 +18,56 @@ async def run():
       # Initialize the connection
       await session.initialize()
 
-      # The example server only supports prompt primitives:
-
       # List available prompts
-      # print("##### list_tools #####")
-      # tools = await session.list_tools()
+      print("##### list_tools #####")
+      tools = await session.list_tools()
 
-      # print(tools)
+      print(tools)
 
-      # print("##### list_directory #####")
-      # result = await session.call_tool(
-      #   "list_directory",
-      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
-      # )
+      print("##### list_directory #####")
+      result = await session.call_tool(
+        "list_directory",
+        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
+      )
 
-      # print(result)
+      print(result)
 
-      # print("##### get_file_info #####")
-      # result = await session.call_tool(
-      #   "get_file_info",
-      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
-      # )
+      print("##### get_file_info #####")
+      result = await session.call_tool(
+        "get_file_info",
+        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
+      )
 
-      # print(result)
+      print(result)
 
-      # print("##### list_allowed_directories #####")
-      # result = await session.call_tool(
-      #   "list_allowed_directories",
-      #   arguments={},
-      # )
+      print("##### list_allowed_directories #####")
+      result = await session.call_tool(
+        "list_allowed_directories",
+        arguments={},
+      )
 
-      # print(result)
+      print(result)
 
-      # print("##### search_files #####")
-      # result = await session.call_tool(
-      #   "search_files",
-      #   arguments={
-      #     "pattern": ".py",
-      #     "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
-      #     "exclude_patterns": [
-      #       "tools",
-      #       "rag_tools",
-      #       "__pycache__",
-      #       ".venv",
-      #       "dist",
-      #       "build",
-      #       "node_modules",
-      #       "backend",
-      #     ],
-      #   },
-      # )
+      print("##### search_files #####")
+      result = await session.call_tool(
+        "search_files",
+        arguments={
+          "pattern": ".py",
+          "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
+          "exclude_patterns": [
+            "tools",
+            "rag_tools",
+            "__pycache__",
+            ".venv",
+            "dist",
+            "build",
+            "node_modules",
+            "backend",
+          ],
+        },
+      )
 
-      # print(result)
+      print(result)
 
       print("##### load_split_embed_files #####")
       result = await session.call_tool(
@@ -95,20 +93,20 @@ async def run():
       print(result)
 
       """
-            Other example calls include:
+      Other example calls include:
 
-            # List available resources
-            resources = await session.list_resources()
+      # List available resources
+      resources = await session.list_resources()
 
-            # List available tools
-            tools = await session.list_tools()
+      # List available tools
+      tools = await session.list_tools()
 
-            # Read a resource
-            resource = await session.read_resource("file://some/path")
+      # Read a resource
+      resource = await session.read_resource("file://some/path")
 
-            # Call a tool
-            result = await session.call_tool("tool-name", arguments={"arg1": "value"})
-            """
+      # Call a tool
+      result = await session.call_tool("tool-name", arguments={"arg1": "value"})
+      """
 
 
 if __name__ == "__main__":
