@@ -10,11 +10,10 @@ function App() {
     console.log(output);
   };
 
-  runCommand();
-
   return (
     <main className="container">
       <h1>Welcome to Tauri + React</h1>
+      <button onClick={runCommand}>Run Command</button>
     </main>
   );
 }

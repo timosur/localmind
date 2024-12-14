@@ -8,6 +8,16 @@
   "permissions": [
     "core:default",
     "shell:allow-open",
-    "shell:default"
+    "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "args": [],
+          "name": "main",
+          "sidecar": true
+        }
+      ]
+    }
   ]
 }
