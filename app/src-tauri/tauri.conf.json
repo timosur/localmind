@@ -24,7 +24,7 @@
   "bundle": {
     "active": true,
     "externalBin": [
-      "/Users/timosur/code/mcp/standalone-mcp-chat/backend/dist/main"
+      "../../backend/dist/main"
     ],
     "targets": "all",
     "icon": [

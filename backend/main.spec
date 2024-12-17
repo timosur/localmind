@@ -4,7 +4,7 @@
 a = Analysis(
     ['main.py'],
     pathex=[],
-    hiddenimports=['chat_handler', 'config', 'messages.send_initialize_message', 'transport.stdio.stdio_client'],
+    hiddenimports=[],
     binaries=[],
     datas=[],
     hooksconfig={},
