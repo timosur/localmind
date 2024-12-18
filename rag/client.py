@@ -1,5 +1,6 @@
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
 from tools.query_files import query_files
 
 # Create server parameters for stdio connection
@@ -83,9 +84,9 @@ async def run():
 
       result = query_files(
         {
-          "query": "5 Massive Books That Are Worth Your Time",
+          "query": "kurzanleitung",
           "files": [
-            "/Users/timosur/code/standalone-mcp-chat/books.pdf",
+            "/Users/timosur/code/standalone-mcp-chat/kurzanleitung.pdf",
           ],
         }
       )
