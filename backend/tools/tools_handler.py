@@ -24,7 +24,9 @@ def parse_tool_response(response: str) -> Optional[Dict[str, Any]]:
   return None
 
 
-async def handle_tool_call(tool_call, conversation_history, session: ClientSession):
+async def handle_tool_call(
+  tool_call, conversation_history, client_sessions: list[ClientSession]
+):
   """
   Handle a single tool call for both OpenAI and Llama formats.
   This function no longer prints directly to stdout. It updates the conversation_history
@@ -48,17 +50,23 @@ async def handle_tool_call(tool_call, conversation_history, session: ClientSessi
     logging.debug(f"Calling tool '{tool_name}' with arguments: {tool_args}")
 
     # Call the tool (no direct print here)
-    tool_response = await session.call_tool(tool_name, tool_args)
+    tool_response = None
 
-    logging.debug(f"Tool '{tool_name}' Response: {tool_response}")
+    for client_session in client_sessions:
+      try:
+        tool_response = await client_session.call_tool(tool_name, tool_args)
+        logging.debug(f"Tool '{tool_name}' Response: {tool_response}")
 
-    if tool_response is None:
-      logging.debug(f"Tool '{tool_name}' did not return a response.")
-      raise Exception(f"Tool '{tool_name}' did not return a response.")
+        if tool_response is None:
+          raise Exception("Did not return a response.")
 
-    if tool_response.isError:
-      logging.debug(f"Error calling tool '{tool_name}': {tool_response.get('error')}")
-      raise Exception(f"Error calling tool '{tool_name}': {tool_response.get('error')}")
+        if tool_response.isError:
+          raise Exception(tool_response.get("error"))
+        break
+      except Exception as e:
+        logging.debug(
+          f"Error calling tool '{tool_name}' with arguments: {tool_args}: {str(e)}"
+        )
 
     # Format the tool response
     formatted_response = format_tool_response(tool_response.content)

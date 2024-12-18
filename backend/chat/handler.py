@@ -5,7 +5,9 @@ from llm.system_prompt_generator import SystemPromptGenerator
 import logging
 
 
-async def send_chat_message(session, user_conversation_history=[], user_message=""):
+async def send_chat_message(
+  client_sessions, user_conversation_history=[], user_message=""
+):
   """Process the conversation loop, handling tool calls and responses.
   Yields different types of messages for streaming the conversation flow.
 
@@ -16,8 +18,12 @@ async def send_chat_message(session, user_conversation_history=[], user_message=
   - content: Content responses from the assistant
   """
   try:
-    tools = await fetch_tools(session)
-    if not tools:
+    tools = []
+    for server_name, client_session in client_sessions:
+      server_tools = await fetch_tools(client_session)
+      tools.extend(server_tools)
+
+    if len(tools) == 0:
       yield {"error": "No tools available"}
       return
 
@@ -25,7 +31,7 @@ async def send_chat_message(session, user_conversation_history=[], user_message=
     openai_tools = convert_to_openai_tools(tools)
 
     async for msg in process_chat_message(
-      session,
+      client_sessions,
       system_prompt,
       openai_tools,
       user_conversation_history,
@@ -40,7 +46,7 @@ async def send_chat_message(session, user_conversation_history=[], user_message=
 
 
 async def process_chat_message(
-  session: ClientSession,
+  client_sessions: list[ClientSession],
   system_prompt,
   openai_tools,
   user_conversation_history,
@@ -77,7 +83,7 @@ async def process_chat_message(
         }
 
         formatted_response, tool_interaction_history = await handle_tool_call(
-          tool_call, conversation_history, session
+          tool_call, conversation_history, client_sessions
         )
 
         yield {"type": "tool_call_response", "content": formatted_response}
