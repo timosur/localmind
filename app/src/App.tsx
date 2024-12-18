@@ -1,23 +1,23 @@
+import "./App.css";
 import { useEffect, useState, useRef } from "react";
 
 function App() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<{ role: string; content?: string; tool_call?: { name: string; arguments: string } }[]>([]);
   const [input, setInput] = useState("");
   const ws = useRef<WebSocket | null>(null);
-  const messageQueue = useRef([]);
-  const currentAssistantMessage = useRef(null);
+  const messageQueue = useRef<string[]>([]);
 
-  const wsUrl = "ws://localhost:8000/chat?command=/Users/timosur/code/mcp/standalone-mcp-chat/rag/.venv/bin/python3&args=/Users/timosur/code/mcp/standalone-mcp-chat/rag/main.py,/Users/timosur/code/mcp/standalone-mcp-chat";
+  const wsUrl = "ws://localhost:8000/chat?command=/Users/timosur/code/standalone-mcp-chat/rag/.venv/bin/python3&args=/Users/timosur/code/standalone-mcp-chat/rag/main.py,/Users/timosur/code/standalone-mcp-chat";
 
   useEffect(() => {
     connectWebSocket();
     return () => {
       if (ws.current) ws.current.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [wsUrl]);
 
   const connectWebSocket = () => {
+    console.log("Connecting to WebSocket...");
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
@@ -57,16 +57,10 @@ function App() {
             break;
 
           case "content":
-            if (!currentAssistantMessage.current) {
-              const assistantMessage = {
-                role: "assistant",
-                content: "",
-              };
-              currentAssistantMessage.current = assistantMessage;
-              addMessage(assistantMessage);
-            }
-            currentAssistantMessage.current.content += content.content;
-            setMessages([...messages]);
+            addMessage({
+              role: "assistant",
+              content: content.content,
+            });
             break;
 
           case "tool_call":
@@ -100,31 +94,22 @@ function App() {
     }
   };
 
-  const addMessage = (message) => {
+  const addMessage = (message: { role: string; content?: string; tool_call?: { name: string; arguments: string } }) => {
+    console.log("Adding message", message);
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
   const sendMessage = () => {
+    setMessages([]);
+
     if (!input.trim()) return;
 
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      messageQueue.current.push(input);
-      connectWebSocket();
-      return;
-    }
-
-    currentAssistantMessage.current = null;
-    ws.current.send(input);
-
-    addMessage({
-      role: "user",
-      content: input,
-    });
+    ws.current?.send(input);
 
     setInput("");
   };
 
-  const getMessageIcon = (role) => {
+  const getMessageIcon = (role: string) => {
     switch (role) {
       case "user":
         return "👤";
@@ -137,7 +122,7 @@ function App() {
     }
   };
 
-  const getRoleClass = (role) => {
+  const getRoleClass = (role: string) => {
     switch (role) {
       case "user":
         return "bg-blue-100";
@@ -151,6 +136,8 @@ function App() {
         return "bg-gray-100";
     }
   };
+
+  console.log(messages)
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-5">
@@ -167,7 +154,6 @@ function App() {
               </div>
               <span className="font-bold capitalize">
                 {message.role}
-                {message.name ? ` (${message.name})` : ""}
               </span>
             </div>
             <div className="ml-11 whitespace-pre-wrap">
@@ -189,9 +175,6 @@ function App() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter message"
-          onKeyPress={(e) => {
-            if (e.key === "Enter") sendMessage();
-          }}
         />
         <button
           className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600"

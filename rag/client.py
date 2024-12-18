@@ -1,5 +1,6 @@
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from tools.query_files import query_files
 
 # Create server parameters for stdio connection
 server_params = StdioServerParameters(
@@ -19,75 +20,74 @@ async def run():
       await session.initialize()
 
       # List available prompts
-      print("##### list_tools #####")
-      tools = await session.list_tools()
+      # print("##### list_tools #####")
+      # tools = await session.list_tools()
 
-      print(tools)
+      # print(tools)
 
-      print("##### list_directory #####")
-      result = await session.call_tool(
-        "list_directory",
-        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
-      )
+      # print("##### list_directory #####")
+      # result = await session.call_tool(
+      #   "list_directory",
+      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat"},
+      # )
 
-      print(result)
+      # print(result)
 
-      print("##### get_file_info #####")
-      result = await session.call_tool(
-        "get_file_info",
-        arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
-      )
+      # print("##### get_file_info #####")
+      # result = await session.call_tool(
+      #   "get_file_info",
+      #   arguments={"path": "/Users/timosur/code/mcp/standalone-mcp-chat/README.md"},
+      # )
 
-      print(result)
+      # print(result)
 
-      print("##### list_allowed_directories #####")
-      result = await session.call_tool(
-        "list_allowed_directories",
-        arguments={},
-      )
+      # print("##### list_allowed_directories #####")
+      # result = await session.call_tool(
+      #   "list_allowed_directories",
+      #   arguments={},
+      # )
 
-      print(result)
+      # print(result)
 
-      print("##### search_files #####")
-      result = await session.call_tool(
-        "search_files",
-        arguments={
-          "pattern": ".py",
-          "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
-          "exclude_patterns": [
-            "tools",
-            "rag_tools",
-            "__pycache__",
-            ".venv",
-            "dist",
-            "build",
-            "node_modules",
-            "backend",
-          ],
-        },
-      )
+      # print("##### search_files #####")
+      # result = await session.call_tool(
+      #   "search_files",
+      #   arguments={
+      #     "pattern": ".py",
+      #     "path": "/Users/timosur/code/mcp/standalone-mcp-chat",
+      #     "exclude_patterns": [
+      #       "tools",
+      #       "rag_tools",
+      #       "__pycache__",
+      #       ".venv",
+      #       "dist",
+      #       "build",
+      #       "node_modules",
+      #       "backend",
+      #     ],
+      #   },
+      # )
 
-      print(result)
+      # print(result)
 
-      print("##### load_split_embed_files #####")
-      result = await session.call_tool(
-        "load_split_embed_files",
-        arguments={
+      print("##### query_files #####")
+      # result = await session.call_tool(
+      #   "query_files",
+      #   arguments={
+      #     "query": "What is this document about?",
+      #     "files": [
+      #       "/Users/timosur/code/standalone-mcp-chat/books.pdf",
+      #     ],
+      #   },
+      # )
+
+      result = query_files(
+        {
+          "query": "5 Massive Books That Are Worth Your Time",
           "files": [
-            "/Users/timosur/code/mcp/standalone-mcp-chat/kurzanleitungen_pdfa.pdf",
+            "/Users/timosur/code/standalone-mcp-chat/books.pdf",
           ],
-        },
-      )
-
-      print(result)
-
-      print("##### query_embedded_files #####")
-      result = await session.call_tool(
-        "query_embedded_files",
-        arguments={
-          "query": "kurzanleitung",
-          "vector_collection_id": "e018c498c7584de0a0d4e737198fc14f",
-        },
+        }
       )
 
       print(result)

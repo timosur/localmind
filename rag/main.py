@@ -1,14 +1,12 @@
 import asyncio
-import os
 import sys
 from collections.abc import Sequence
 from typing import Any
 
-from mcp.server import Server, NotificationOptions
-from mcp.server.stdio import stdio_server
+from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+from mcp.server.stdio import stdio_server
 from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
-
 from tools.allowed_directories import (
   TOOL_SCHEMA as LIST_ALLOWED_DIRECTORIES_TOOL_SCHEMA,
 )
@@ -17,15 +15,10 @@ from tools.get_file_info import TOOL_SCHEMA as GET_FILE_INFO_TOOL_SCHEMA
 from tools.get_file_info import get_file_info
 from tools.list_directory import TOOL_SCHEMA as LIST_DIRECTORY_TOOL_SCHEMA
 from tools.list_directory import list_directory
-from tools.load_split_embed_files import (
-  TOOL_SCHEMA as LOAD_SPLIT_EMBED_FILES_TOOL_SCHEMA,
-)
-from tools.load_split_embed_files import load_split_embed_files
+from tools.query_files import TOOL_SCHEMA as QUERY_EMBEDDED_FILES_TOOL_SCHEMA
+from tools.query_files import query_files
 from tools.search_files import TOOL_SCHEMA as SEARCH_FILES_TOOL_SCHEMA
 from tools.search_files import search_files
-from tools.query_embedded_files import TOOL_SCHEMA as QUERY_EMBEDDED_FILES_TOOL_SCHEMA
-from tools.query_embedded_files import query_embedded_files
-
 
 # Create a server instance
 server = Server("filesystem-rag")
@@ -45,7 +38,6 @@ async def list_tools() -> list[Tool]:
     GET_FILE_INFO_TOOL_SCHEMA,
     SEARCH_FILES_TOOL_SCHEMA,
     LIST_ALLOWED_DIRECTORIES_TOOL_SCHEMA,
-    LOAD_SPLIT_EMBED_FILES_TOOL_SCHEMA,
     QUERY_EMBEDDED_FILES_TOOL_SCHEMA,
   ]
 
@@ -65,10 +57,8 @@ async def call_tool(
         return search_files(arguments)
       case "list_allowed_directories":
         return list_allowed_directories(arguments, allowed_directories)
-      case "load_split_embed_files":
-        return load_split_embed_files(arguments)
-      case "query_embedded_files":
-        return query_embedded_files(arguments)
+      case "query_files":
+        return query_files(arguments)
       case _:
         raise ValueError(f"Unknown tool: {name}")
   except Exception as e:

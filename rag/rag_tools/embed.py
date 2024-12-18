@@ -34,6 +34,8 @@ def load_and_split_data(file_path):
   text_splitter = RecursiveCharacterTextSplitter(chunk_size=7500, chunk_overlap=100)
   chunks = text_splitter.split_documents(data)
 
+  print(chunks)
+
   return chunks
 
 
@@ -45,7 +47,6 @@ def embed_file(vector_collection_id, file_path):
     db = get_vector_db(vector_collection_id)
     db.add_documents(chunks)
     db.persist()
-    os.remove(file_path)
 
     return True
 
