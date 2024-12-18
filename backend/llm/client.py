@@ -15,7 +15,7 @@ class LLMClient:
     self.api_key = os.getenv("AZURE_OPENAI_API_KEY")
     self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
     self.openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-    self.openai_model = os.getenv("AZURE_OPENAI_MODEL")
+    self.openai_model = os.getenv("AZURE_OPENAI_CHAT_MODEL")
 
     # ensure we have the api key for openai if set
     if not self.api_key:
@@ -31,14 +31,14 @@ class LLMClient:
 
     # ensure we have the model for openai if set
     if not self.openai_model:
-      raise ValueError("The AZURE_OPENAI_MODEL environment variable is not set.")
+      raise ValueError("The AZURE_OPENAI_CHAT_MODEL environment variable is not set.")
 
   def create_completion(self, messages: List[Dict], tools: List = None):
     """Handle OpenAI chat completions."""  # get the openai client
 
     client = AzureOpenAI(
       api_key=self.api_key,
-      azure_endpoint=f"https://{self.deployment_name}.openai.azure.com",
+      azure_endpoint=self.azure_endpoint,
       api_version=self.openai_api_version,
     )
 
