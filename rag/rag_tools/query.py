@@ -1,13 +1,16 @@
-import os
-
-from db.vector import get as get_vector_db
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import AzureChatOpenAI
 
-LLM_MODEL = os.getenv("LLM_MODEL", "mistral")
+from db.vector import get as get_vector_db
+from config.env import (
+  AZURE_OPENAI_API_KEY,
+  AZURE_OPENAI_API_VERSION,
+  AZURE_OPENAI_CHAT_MODEL,
+  AZURE_OPENAI_ENDPOINT,
+)
 
 
 # Function to get the prompt templates for generating alternative questions and answering based on context
@@ -36,7 +39,12 @@ def get_prompt():
 def query(vector_collection_id, input):
   if input:
     # Initialize the language model with the specified model name
-    llm = ChatOllama(model=LLM_MODEL)
+    llm = AzureChatOpenAI(
+      openai_api_key=AZURE_OPENAI_API_KEY,
+      azure_deployment=AZURE_OPENAI_CHAT_MODEL,
+      api_version=AZURE_OPENAI_API_VERSION,
+      azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    )
     # Get the vector database instance
     db = get_vector_db(vector_collection_id)
     # Get the prompt templates

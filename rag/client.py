@@ -84,9 +84,9 @@ async def run():
 
       result = query_files(
         {
-          "query": "kurzanleitung",
+          "query": "War and Peace",
           "files": [
-            "/Users/timosur/code/standalone-mcp-chat/kurzanleitung.pdf",
+            "/Users/timosur/code/standalone-mcp-chat/books.pdf",
           ],
         }
       )

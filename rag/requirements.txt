@@ -4,6 +4,8 @@ unstructured
 langchain 
 langchain-text-splitters
 langchain-community
+langchain-openai
 pypdf
 werkzeug
 chromadb
+langchain-chroma
