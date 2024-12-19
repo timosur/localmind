@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='main',
+    name='main-aarch64-apple-darwin',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
