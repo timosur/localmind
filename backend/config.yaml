@@ -3,6 +3,7 @@ server:
   command: /Users/timosur/code/standalone-mcp-chat/rag/.venv/bin/python3
   args:
   - /Users/timosur/code/standalone-mcp-chat/rag/main.py
+  - /Users/timosur/code/standalone-mcp-chat
 - name: sqlite
   command: uvx
   args:
