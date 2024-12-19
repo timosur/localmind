@@ -1,8 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import { RootLayout } from "@/layout";
-import { ChatLayout } from "@/components/chat/chat-layout";
 import { NotFound } from "@/pages/NotFound";
+import { Chat } from "@/pages/Chat";
 
 export const router = createBrowserRouter([
   {
@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <ChatLayout defaultLayout={[0, 0]} navCollapsedSize={8} />,
+        element: <Chat></Chat>,
       },
     ],
   },

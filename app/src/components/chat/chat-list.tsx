@@ -45,7 +45,7 @@ export function ChatList({
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
           {messages.map((message, index) => {
-            const variant = getMessageVariant(message.name, selectedUser.name);
+            const variant = getMessageVariant(message.name, "message");
             return (
               <motion.div
                 key={index}

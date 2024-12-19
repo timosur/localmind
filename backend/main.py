@@ -1,15 +1,15 @@
 import asyncio
 import logging
+from contextlib import AsyncExitStack
 
 import uvicorn
-from config import APP_CONFIG
-from chat.handler import send_chat_message
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.websockets import WebSocketState
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from contextlib import AsyncExitStack
-
+from chat.handler import send_chat_message
+from config import APP_CONFIG
 
 # Configure logging
 logging.basicConfig(
@@ -27,48 +27,78 @@ app = FastAPI()
 @app.websocket("/chat")
 async def chat(websocket: WebSocket):
   client_sessions = []
-  async with AsyncExitStack() as stack:
-    # Connect to all servers and set up client sessions
-    for server_config in APP_CONFIG.server:
-      try:
-        logging.debug(f"[{server_config['name']}] Try to connect")
-        logging.debug(f"[{server_config['name']}] {server_config}")
 
-        server_params = StdioServerParameters(
-          command=server_config["command"],
-          args=server_config.get("args", []),
-        )
-
-        # Enter the stdio_client async context
-        read, write = await stack.enter_async_context(stdio_client(server_params))
-
-        # Enter the ClientSession async context
-        client_session = await stack.enter_async_context(ClientSession(read, write))
-
-        # Initialize the connection
-        await client_session.initialize()
-        logging.info(f"[{server_config['name']}] Connected")
-
-        client_sessions.append((server_config["name"], client_session))
-      except Exception as e:
-        logging.error(f"[{server_config['name']}] Error connecting: {str(e)}")
-
-    # Accept the websocket connection after all servers are connected
+  try:
     await websocket.accept()
 
-    # Now all sessions remain open as long as we're inside the async with stack block.
-    while True:
-      try:
-        message = await websocket.receive_text()
+    async with AsyncExitStack() as stack:
+      # Connect to all servers and set up client sessions
+      for server_config in APP_CONFIG.server:
+        try:
+          logging.debug(f"[{server_config['name']}] Try to connect")
+          logging.debug(f"[{server_config['name']}] {server_config}")
 
-        # Process the chat message and stream response
-        async for response in send_chat_message(client_sessions, user_message=message):
-          await websocket.send_json({"type": "stream", "content": response})
-          await asyncio.sleep(0)  # Allow other tasks to run
+          server_params = StdioServerParameters(
+            command=server_config["command"],
+            args=server_config.get("args", []),
+          )
 
-      except Exception as e:
-        await websocket.send_json({"type": "error", "content": str(e)})
-        break
+          # Enter the stdio_client async context
+          read, write = await stack.enter_async_context(stdio_client(server_params))
+
+          # Enter the ClientSession async context
+          client_session = await stack.enter_async_context(ClientSession(read, write))
+
+          # Initialize the connection
+          await client_session.initialize()
+          logging.info(f"[{server_config['name']}] Connected")
+
+          client_sessions.append((server_config["name"], client_session))
+        except Exception as e:
+          logging.error(f"[{server_config['name']}] Error connecting: {str(e)}")
+          # Optionally re-raise if you want to fail completely on any server connection error
+          # raise
+
+      while True:
+        try:
+          message = await websocket.receive_text()
+
+          # Process the chat message and stream response
+          async for response in send_chat_message(
+            client_sessions, user_message=message
+          ):
+            if websocket.client_state.value == WebSocketState.DISCONNECTED:
+              logging.info("Client disconnected during message streaming")
+              return
+
+            try:
+              await websocket.send_json({"type": "stream", "content": response})
+            except WebSocketDisconnect:
+              logging.info("Client disconnected while sending response")
+              return
+
+            await asyncio.sleep(0)  # Allow other tasks to run
+
+        except WebSocketDisconnect:
+          logging.info("Client disconnected while receiving message")
+          return
+        except Exception as e:
+          logging.error(f"Error processing message: {str(e)}")
+          try:
+            await websocket.send_json(
+              {
+                "type": "error",
+                "content": "An error occurred while processing your message",
+              }
+            )
+          except (WebSocketDisconnect, RuntimeError):
+            logging.info("Client disconnected while sending error")
+            return
+
+  except WebSocketDisconnect:
+    logging.info("Client disconnected during connection setup")
+  except Exception as e:
+    logging.error(f"Unexpected error in websocket handler: {str(e)}")
 
 
 if __name__ == "__main__":

@@ -10,15 +10,13 @@ import { Chat } from "./chat";
 import { userData } from "@/_data";
 
 interface ChatLayoutProps {
-  defaultLayout: number[] | undefined;
-  defaultCollapsed?: boolean;
   navCollapsedSize: number;
+  defaultCollapsed?: boolean;
 }
 
 export function ChatLayout({
-  defaultLayout = [320, 480],
-  defaultCollapsed = false,
   navCollapsedSize,
+  defaultCollapsed = false,
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
   const [selectedUser, setSelectedUser] = React.useState(userData[0]);
@@ -44,30 +42,19 @@ export function ChatLayout({
   return (
     <ResizablePanelGroup
       direction="horizontal"
-      onLayout={(sizes: number[]) => {
-        document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-          sizes,
-        )}`;
-      }}
       className="h-full items-stretch"
     >
       <ResizablePanel
-        defaultSize={defaultLayout[0]}
+        defaultSize={320}
         collapsedSize={navCollapsedSize}
         collapsible={true}
         minSize={isMobile ? 0 : 24}
         maxSize={isMobile ? 8 : 30}
         onCollapse={() => {
           setIsCollapsed(true);
-          document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-            true,
-          )}`;
         }}
         onExpand={() => {
           setIsCollapsed(false);
-          document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-            false,
-          )}`;
         }}
         className={cn(
           isCollapsed &&
@@ -86,7 +73,7 @@ export function ChatLayout({
         />
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+      <ResizablePanel defaultSize={480} minSize={30}>
         <Chat
           messages={selectedUser.messages}
           selectedUser={selectedUser}
