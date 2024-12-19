@@ -52,10 +52,10 @@ async def handle_tool_call(
     # Call the tool (no direct print here)
     tool_response = None
 
-    for client_session in client_sessions:
+    for server_name, client_session in client_sessions:
       try:
         tool_response = await client_session.call_tool(tool_name, tool_args)
-        logging.debug(f"Tool '{tool_name}' Response: {tool_response}")
+        logging.debug(f"[{server_name}] Tool '{tool_name}' Response: {tool_response}")
 
         if tool_response is None:
           raise Exception("Did not return a response.")
@@ -65,7 +65,7 @@ async def handle_tool_call(
         break
       except Exception as e:
         logging.debug(
-          f"Error calling tool '{tool_name}' with arguments: {tool_args}: {str(e)}"
+          f"[{server_name}] Error calling tool '{tool_name}' with arguments: {tool_args}: {str(e)}"
         )
 
     # Format the tool response

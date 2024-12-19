@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 import uvicorn
+from config import APP_CONFIG
 from chat.handler import send_chat_message
 from fastapi import FastAPI, WebSocket
 from mcp import ClientSession, StdioServerParameters
@@ -21,38 +22,21 @@ logging.basicConfig(
 
 app = FastAPI()
 
-server_config = {
-  "rag": {
-    "command": "/Users/timosur/code/standalone-mcp-chat/rag/.venv/bin/python3",
-    "args": ["/Users/timosur/code/standalone-mcp-chat/rag/main.py"],
-  },
-  "sqlite": {
-    "command": "uvx",
-    "args": [
-      "mcp-server-sqlite",
-      "--db-path",
-      "/Users/timosur/code/standalone-mcp-chat/test.db",
-    ],
-  },
-  "memory": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-memory"]},
-}
-
 
 # Create server parameters for stdio connection
 @app.websocket("/chat")
 async def chat(websocket: WebSocket):
-  await websocket.accept()
-
   client_sessions = []
   async with AsyncExitStack() as stack:
     # Connect to all servers and set up client sessions
-    for server_name, params in server_config.items():
+    for server_config in APP_CONFIG.server:
       try:
-        logging.debug(f"[{server_name}] Try to connect using params {params}")
+        logging.debug(f"[{server_config['name']}] Try to connect")
+        logging.debug(f"[{server_config['name']}] {server_config}")
 
         server_params = StdioServerParameters(
-          command=params["command"],
-          args=params.get("args", []),
+          command=server_config["command"],
+          args=server_config.get("args", []),
         )
 
         # Enter the stdio_client async context
@@ -63,11 +47,14 @@ async def chat(websocket: WebSocket):
 
         # Initialize the connection
         await client_session.initialize()
-        logging.info(f"[{server_name}] Connected")
+        logging.info(f"[{server_config['name']}] Connected")
 
-        client_sessions.append((server_name, client_session))
+        client_sessions.append((server_config["name"], client_session))
       except Exception as e:
-        logging.error(f"[{server_name}] Error connecting: {str(e)}")
+        logging.error(f"[{server_config['name']}] Error connecting: {str(e)}")
+
+    # Accept the websocket connection after all servers are connected
+    await websocket.accept()
 
     # Now all sessions remain open as long as we're inside the async with stack block.
     while True:

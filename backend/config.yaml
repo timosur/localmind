@@ -1,0 +1,16 @@
+server:
+- name: rag
+  command: /Users/timosur/code/standalone-mcp-chat/rag/.venv/bin/python3
+  args:
+  - /Users/timosur/code/standalone-mcp-chat/rag/main.py
+- name: sqlite
+  command: uvx
+  args:
+  - mcp-server-sqlite
+  - --db-path
+  - /Users/timosur/code/standalone-mcp-chat/test.db
+- name: memory
+  command: npx
+  args:
+  - -y
+  - "@modelcontextprotocol/server-memory"
