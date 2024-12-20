@@ -1,17 +1,24 @@
 import asyncio
-from datetime import datetime
 import logging
-from contextlib import AsyncExitStack
 import uuid
+from contextlib import AsyncExitStack
+from datetime import datetime
 
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from db.model.chat import Chat, ChatMessage
+from db import get_async_session
 from chat.handler import send_chat_message
 from config import APP_CONFIG
+from db.model import Base
+from db import sync_engine
 
 # Configure logging
 logging.basicConfig(
@@ -24,11 +31,55 @@ logging.basicConfig(
 
 app = FastAPI()
 
+# Create the database tables
+Base.metadata.create_all(sync_engine)
+
+
+@app.get("/chat")
+async def list_chats(session: AsyncSession = Depends(get_async_session)):
+  stmt = select(Chat).options(selectinload(Chat.messages))
+  result = await session.execute(stmt)
+  chats = result.scalars().all()
+  return {"chats": chats}
+
+
+@app.post("/chat")
+async def create_chat(session: AsyncSession = Depends(get_async_session)):
+  # Create new empty chat and redirect to websocket chat
+  chat = Chat()
+  session.add(chat)
+  await session.commit()
+  return {"chat_id": chat.id}
+
+
+@app.get("/chat/{chat_id}")
+async def get_chat(chat_id: str, session: AsyncSession = Depends(get_async_session)):
+  stmt = select(Chat).filter(Chat.id == chat_id)
+  result = await session.execute(stmt)
+  chat = result.scalars().first()
+  return {"chat": chat}
+
 
 # Create server parameters for stdio connection
 @app.websocket("/chat")
-async def chat(websocket: WebSocket):
+async def chat(
+  websocket: WebSocket,
+  id: str = None,
+  session: AsyncSession = Depends(get_async_session),
+):
   client_sessions = []
+
+  if id is None:
+    chat = Chat()
+    session.add(chat)
+    await session.commit()
+    id = chat.id
+  else:
+    stmt = select(Chat).filter(Chat.id == id)
+    result = await session.execute(stmt)
+    chat = result.scalars().first()
+    if chat is None:
+      return {"error": "Chat not found"}, 404
 
   try:
     await websocket.accept()
@@ -61,15 +112,13 @@ async def chat(websocket: WebSocket):
           # Optionally re-raise if you want to fail completely on any server connection error
           # raise
 
-      def convert_message(role: str, type: str, content: str):
-        return {
-          "id": uuid.uuid4().hex,
-          "role": role,
-          "type": type,
-          "isLoading": False,  # TODO: Implement loading state
-          "content": content,
-          "timestamp": datetime.now().isoformat(),
-        }
+      async def create_message(role: str, type: str, content: str):
+        # Create message in database
+        message = ChatMessage(chat_id=id, role=role, type=type, content=content)
+        session.add(message)
+        await session.commit()
+
+        return message.to_dict()
 
       while True:
         try:
@@ -84,7 +133,8 @@ async def chat(websocket: WebSocket):
               return
 
             try:
-              await websocket.send_json(convert_message(role, type, content))
+              message = await create_message(role, type, content)
+              await websocket.send_json(message)
             except WebSocketDisconnect:
               logging.info("Client disconnected while sending response")
               return
@@ -97,9 +147,8 @@ async def chat(websocket: WebSocket):
         except Exception as e:
           logging.error(f"Error processing message: {str(e)}")
           try:
-            await websocket.send_json(
-              convert_message("system", "error", str(e), isError=True)
-            )
+            message = await create_message("system", "error", str(e), isError=True)
+            await websocket.send_json(message)
           except (WebSocketDisconnect, RuntimeError):
             logging.info("Client disconnected while sending error")
             return

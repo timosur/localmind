@@ -9,14 +9,18 @@ load_dotenv()
 
 
 # Function to get environment variables
-def get_env_variable(key: str) -> str:
+def get_env_variable(key: str, default: str = None) -> str:
   value = os.getenv(key)
   if value is None:
+    if default is not None:
+      return default
     raise ValueError(f"Environment variable {key} not set.")
   return value
 
 
 APP_CONFIG: AppConfig = AppConfig()
+
+APP_CONFIG.db_file_path = get_env_variable("APP_DB_FILE_PATH", "./db.sqlite")
 
 # Get app config file directory from environment variable
 APP_CONFIG.config_file_path = get_env_variable("APP_CONFIG_FILE_PATH")
