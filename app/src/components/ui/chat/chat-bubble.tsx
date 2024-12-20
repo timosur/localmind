@@ -7,7 +7,7 @@ import { Button, ButtonProps } from "../button";
 
 // ChatBubble
 const chatBubbleVariant = cva(
-  "flex gap-2 max-w-[60%] items-end relative group",
+  "flex gap-2 items-end relative group min-w-2",
   {
     variants: {
       variant: {
@@ -28,7 +28,7 @@ const chatBubbleVariant = cva(
 
 interface ChatBubbleProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof chatBubbleVariant> {}
+  VariantProps<typeof chatBubbleVariant> { }
 
 const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
   ({ className, variant, layout, children, ...props }, ref) => (
@@ -43,9 +43,9 @@ const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
       {React.Children.map(children, (child) =>
         React.isValidElement(child) && typeof child.type !== "string"
           ? React.cloneElement(child, {
-              variant,
-              layout,
-            } as React.ComponentProps<typeof child.type>)
+            variant,
+            layout,
+          } as React.ComponentProps<typeof child.type>)
           : child,
       )}
     </div>
@@ -92,7 +92,7 @@ const chatBubbleMessageVariants = cva("p-4", {
 
 interface ChatBubbleMessageProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof chatBubbleMessageVariants> {
+  VariantProps<typeof chatBubbleMessageVariants> {
   isLoading?: boolean;
 }
 
