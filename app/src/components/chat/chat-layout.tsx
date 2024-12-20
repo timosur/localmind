@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { userData } from "@/_data";
+import { chatData } from "@/_data";
 
 interface ChatLayoutProps {
   navCollapsedSize: number;
@@ -19,7 +19,7 @@ export function ChatLayout({
   defaultCollapsed = false,
 }: ChatLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [selectedUser, setSelectedUser] = React.useState(userData[0]);
+  const [selectedChat, setSelectedChat] = React.useState(chatData[0]);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -63,11 +63,11 @@ export function ChatLayout({
       >
         <Sidebar
           isCollapsed={isCollapsed || isMobile}
-          chats={userData.map((user) => ({
-            name: user.name,
-            messages: user.messages ?? [],
-            avatar: user.avatar,
-            variant: selectedUser.name === user.name ? "secondary" : "ghost",
+          chats={chatData.map((chat) => ({
+            id: chat.id,
+            title: chat.title,
+            messages: chat.messages ?? [],
+            variant: selectedChat.id === chat.id ? "secondary" : "ghost",
           }))}
           isMobile={isMobile}
         />
@@ -75,8 +75,7 @@ export function ChatLayout({
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={480} minSize={30}>
         <Chat
-          messages={selectedUser.messages}
-          selectedUser={selectedUser}
+          selectedChat={selectedChat}
           isMobile={isMobile}
         />
       </ResizablePanel>

@@ -4,13 +4,12 @@ import {
   Paperclip,
   PlusCircle,
   SendHorizontal,
-  ThumbsUp,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Message, loggedInUserData } from "@/_data";
+import { Message } from "@/model/message";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ChatInput } from "../ui/chat/chat-input";
 import useChatStore from "@/hooks/useChatStore";
@@ -24,11 +23,9 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const setMessages = useChatStore((state) => state.setMessages);
-  const [isLoading, setisLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const ws = useRef<WebSocket | null>(null);
   const wsUrl = "ws://localhost:8000/chat";
-  const messageQueue = useRef<string[]>([]);
 
   const storeNewMessage = (newMessage: Message) => {
     useChatStore.setState((state) => ({
@@ -49,24 +46,17 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
 
     ws.current.onopen = () => {
       console.log("Connected to WebSocket");
-      while (messageQueue.current.length > 0) {
-        if (ws.current) {
-          const message = messageQueue.current.shift();
-          if (message !== undefined) {
-            ws.current.send(message);
-          }
-        }
-      }
+      setIsLoading(false);
     };
 
     ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      storeNewMessage({
-        id: 123,
-        avatar: "",
-        name: data.content.type,
-        message: data.content.content,
-      });
+      const message = JSON.parse(event.data) as Message;
+
+      if ((message.role === "assistent" || message.role === "system") && (message.type === "error" || message.type === "message")) {
+        setIsLoading(false);
+      }
+
+      storeNewMessage(message);
     };
 
     ws.current.onclose = () => {
@@ -80,8 +70,13 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
 
   const handleSend = () => {
     if (message.trim()) {
-      ws.current?.send(message.trim());
-      setMessage("");
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(message.trim());
+        setMessage("");
+        setIsLoading(true);
+      } else {
+        console.error("WebSocket is not open.");
+      }
 
       if (inputRef.current) {
         inputRef.current.focus();

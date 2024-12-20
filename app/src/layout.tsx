@@ -4,7 +4,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
-import ChatSupport from "@/components/chat/chat-support";
 import { Outlet } from "react-router-dom";
 
 export const viewport = {
@@ -18,7 +17,7 @@ export function RootLayout() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <main className="flex h-[calc(100dvh)] flex-col items-center justify-center p-4 md:px-24 py-32 gap-4">
-        <div className="flex justify-between max-w-5xl w-full items-center">
+        <div className="flex justify-between w-full items-center">
           <div className="flex gap-3 md:gap-6 items-center">
             <a
               href="#"
@@ -41,13 +40,13 @@ export function RootLayout() {
           </div>
         </div>
 
-        <div className="z-10 border rounded-lg max-w-5xl w-full h-full text-sm flex">
+        <div className="z-10 border rounded-lg w-full h-full text-sm flex">
           {/* Page content */}
           <Outlet />
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between max-w-5xl w-full items-start text-xs md:text-sm text-muted-foreground ">
+        <div className="flex justify-between w-full items-start text-xs md:text-sm text-muted-foreground ">
           <p className="max-w-[150px] sm:max-w-lg">
             Built by{" "}
             <a
@@ -71,7 +70,7 @@ export function RootLayout() {
         </div>
 
         {/* Chat support component */}
-        <ChatSupport />
+        {/* <ChatSupport /> */}
       </main>
     </ThemeProvider>
   );

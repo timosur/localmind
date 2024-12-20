@@ -1,6 +1,8 @@
 import asyncio
+from datetime import datetime
 import logging
 from contextlib import AsyncExitStack
+import uuid
 
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -59,12 +61,22 @@ async def chat(websocket: WebSocket):
           # Optionally re-raise if you want to fail completely on any server connection error
           # raise
 
+      def convert_message(role: str, type: str, content: str):
+        return {
+          "id": uuid.uuid4().hex,
+          "role": role,
+          "type": type,
+          "isLoading": False,  # TODO: Implement loading state
+          "content": content,
+          "timestamp": datetime.now().isoformat(),
+        }
+
       while True:
         try:
           message = await websocket.receive_text()
 
-          # Process the chat message and stream response
-          async for response in send_chat_message(
+          # Process the chat message and stream messages back to the client
+          async for role, type, content in send_chat_message(
             client_sessions, user_message=message
           ):
             if websocket.client_state.value == WebSocketState.DISCONNECTED:
@@ -72,7 +84,7 @@ async def chat(websocket: WebSocket):
               return
 
             try:
-              await websocket.send_json({"type": "stream", "content": response})
+              await websocket.send_json(convert_message(role, type, content))
             except WebSocketDisconnect:
               logging.info("Client disconnected while sending response")
               return
@@ -86,10 +98,7 @@ async def chat(websocket: WebSocket):
           logging.error(f"Error processing message: {str(e)}")
           try:
             await websocket.send_json(
-              {
-                "type": "error",
-                "content": "An error occurred while processing your message",
-              }
+              convert_message("system", "error", str(e), isError=True)
             )
           except (WebSocketDisconnect, RuntimeError):
             logging.info("Client disconnected while sending error")

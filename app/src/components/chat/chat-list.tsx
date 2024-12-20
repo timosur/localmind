@@ -1,30 +1,26 @@
-import { Message, UserData } from "@/_data";
-import { useRef, useEffect } from "react";
-import ChatBottombar from "./chat-bottombar";
+import { Message } from "@/model/message";
+import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import {
-  ChatBubbleAvatar,
-  ChatBubbleMessage,
-  ChatBubbleTimestamp,
   ChatBubble,
   ChatBubbleAction,
   ChatBubbleActionWrapper,
+  ChatBubbleMessage,
+  ChatBubbleTimestamp,
 } from "../ui/chat/chat-bubble";
 import { ChatMessageList } from "../ui/chat/chat-message-list";
-import { DotsVerticalIcon } from "@radix-ui/react-icons";
+import ChatBottombar from "./chat-bottombar";
+import { PersonIcon, DesktopIcon } from "@radix-ui/react-icons";
+import ReactMarkdown from 'react-markdown';
 
 interface ChatListProps {
   messages: Message[];
-  selectedUser: UserData;
   isMobile: boolean;
 }
 
-const getMessageVariant = (messageName: string, selectedUserName: string) =>
-  messageName !== selectedUserName ? "sent" : "received";
-
 export function ChatList({
   messages,
-  selectedUser,
   isMobile,
 }: ChatListProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -45,7 +41,6 @@ export function ChatList({
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
           {messages.map((message, index) => {
-            const variant = getMessageVariant(message.name, "message");
             return (
               <motion.div
                 key={index}
@@ -65,13 +60,17 @@ export function ChatList({
                 className="flex flex-col gap-2 p-4"
               >
                 {/* Usage of ChatBubble component */}
-                <ChatBubble variant={variant}>
-                  <ChatBubbleAvatar src={message.avatar} />
+                <ChatBubble variant={message.role === "user" ? "sent" : "received"}>
                   <ChatBubbleMessage isLoading={message.isLoading}>
-                    {message.message}
-                    {message.timestamp && (
-                      <ChatBubbleTimestamp timestamp={message.timestamp} />
-                    )}
+                    <div className="mb-2">
+                      {message.role === "user" ? (
+                        <PersonIcon className="size-7" />
+                      ) : (
+                        <DesktopIcon className="size-7" />
+                      )}
+                    </div>
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <small><ChatBubbleTimestamp timestamp={new Date(message.timestamp!).toLocaleString()} /></small>
                   </ChatBubbleMessage>
                   <ChatBubbleActionWrapper>
                     {actionIcons.map(({ icon: Icon, type }) => (

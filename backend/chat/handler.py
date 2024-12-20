@@ -10,15 +10,6 @@ from chat.system_prompt import generate as generate_system_prompt
 async def send_chat_message(
   client_sessions, user_conversation_history=[], user_message=""
 ):
-  """Process the conversation loop, handling tool calls and responses.
-  Yields different types of messages for streaming the conversation flow.
-
-  Types of yielded messages:
-  - message: User or assistant messages
-  - tool_call: Function calls made by the assistant
-  - tool_result: Results from tool executions
-  - content: Content responses from the assistant
-  """
   try:
     tools = []
     for server_name, client_session in client_sessions:
@@ -26,25 +17,24 @@ async def send_chat_message(
       tools.extend(server_tools)
 
     if len(tools) == 0:
-      yield {"error": "No tools available"}
+      yield ("sytem", "error", "No tools available")
       return
 
     system_prompt = generate_system_prompt(tools)
     openai_tools = convert_to_openai_tools(tools)
 
-    async for msg in process_chat_message(
+    async for role, type, content in process_chat_message(
       client_sessions,
       system_prompt,
       openai_tools,
       user_conversation_history,
       user_message,
     ):
-      yield msg
+      yield (role, type, content)
 
   except Exception as e:
-    logging.debug(e)
-    logging.debug(f"[red]Error in processing chat:[/red] {e}")
-    yield {"type": "error", "content": str(e)}
+    logging.error(f"Error in processing chat: {e}")
+    yield ("system", "error", str(e))
 
 
 async def process_chat_message(
@@ -61,7 +51,7 @@ async def process_chat_message(
   ]
 
   # Yield user message
-  yield {"type": "message", "role": "user", "content": user_message}
+  yield ("user", "message", user_message)
 
   conversation_history.append({"role": "user", "content": user_message})
 
@@ -76,31 +66,27 @@ async def process_chat_message(
 
     if tool_calls:
       for tool_call in tool_calls:
-        yield {
-          "type": "tool_call",
-          "content": {
-            "name": tool_call.function.name,
-            "arguments": tool_call.function.arguments,
-          },
-        }
+        yield (
+          "assistent",
+          "tool_call",
+          f"# Tool call\n\n{tool_call.function.name}\n\n## Arguments\n\n{tool_call.function.arguments}",
+        )
 
         formatted_response, tool_interaction_history = await handle_tool_call(
           tool_call, conversation_history, client_sessions
         )
 
-        yield {"type": "tool_call_response", "content": formatted_response}
+        yield ("assistent", "tool_response", formatted_response)
 
         # Append new history to the conversation
         conversation_history.extend(tool_interaction_history)
 
-      logging.info(
-        "Continue to the next iteration of the while loop, further processing the conversation"
-      )
       continue
 
     # Assistant panel with Markdown
     conversation_history.append({"role": "assistant", "content": response_content})
 
-    yield {"type": "content", "content": response_content}
+    # Yield assistant response
+    yield ("assistent", "message", response_content)
 
     return

@@ -1,10 +1,8 @@
-export interface Message {
+export interface Message<TContent = any> {
   id: number;
-  avatar: string;
-  name: string;
-  message?: string;
+  role: "user" | "assistent" | "system";
+  type: "tool_response" | "tool_call" | "message" | "error";
   isLoading?: boolean;
+  content?: TContent;
   timestamp?: string;
-  role?: string;
-  isLiked?: boolean;
 }
