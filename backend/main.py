@@ -1,8 +1,7 @@
 import asyncio
 import logging
-import uuid
+import json
 from contextlib import AsyncExitStack
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -68,6 +67,8 @@ async def chat(
   session: AsyncSession = Depends(get_async_session),
 ):
   client_sessions = []
+  chat_interaction_history = []
+  messages = []
 
   if id is None:
     chat = Chat()
@@ -81,8 +82,24 @@ async def chat(
     if chat is None:
       return {"error": "Chat not found"}, 404
 
+    # Load all messages for the chat
+    stmt = select(ChatMessage).filter(ChatMessage.chat_id == id)
+    result = await session.execute(stmt)
+    messages = result.scalars().all()
+
+    # Parse the interaction history from the messages
+    for message in messages:
+      chat_interaction_history.extend(json.loads(message.interaction_history))
+
+  logging.debug(f"Chat ID: {id}")
+  logging.debug(f"Chat Interaction History: {chat_interaction_history}")
+
   try:
     await websocket.accept()
+
+    # Send existing messages to the client
+    for message in messages:
+      await websocket.send_json(message.to_dict())
 
     async with AsyncExitStack() as stack:
       # Connect to all servers and set up client sessions
@@ -112,9 +129,17 @@ async def chat(
           # Optionally re-raise if you want to fail completely on any server connection error
           # raise
 
-      async def create_message(role: str, type: str, content: str):
+      async def create_message(
+        role: str, type: str, content: str, interaction_history=[]
+      ):
         # Create message in database
-        message = ChatMessage(chat_id=id, role=role, type=type, content=content)
+        message = ChatMessage(
+          chat_id=id,
+          role=role,
+          type=type,
+          content=content,
+          interaction_history=json.dumps(interaction_history),
+        )
         session.add(message)
         await session.commit()
 
@@ -125,15 +150,17 @@ async def chat(
           message = await websocket.receive_text()
 
           # Process the chat message and stream messages back to the client
-          async for role, type, content in send_chat_message(
-            client_sessions, user_message=message
+          async for role, type, content, interaction_history in send_chat_message(
+            client_sessions,
+            user_message=message,
+            chat_interaction_history=chat_interaction_history,
           ):
             if websocket.client_state.value == WebSocketState.DISCONNECTED:
               logging.info("Client disconnected during message streaming")
               return
 
             try:
-              message = await create_message(role, type, content)
+              message = await create_message(role, type, content, interaction_history)
               await websocket.send_json(message)
             except WebSocketDisconnect:
               logging.info("Client disconnected while sending response")

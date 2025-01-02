@@ -13,15 +13,18 @@ import { ChatMessageList } from "../ui/chat/chat-message-list";
 import ChatBottombar from "./chat-bottombar";
 import { PersonIcon, DesktopIcon } from "@radix-ui/react-icons";
 import ReactMarkdown from 'react-markdown';
+import { Chat as ChatModel } from "@/model/chat";
 
 interface ChatListProps {
   messages: Message[];
   isMobile: boolean;
+  selectedChat: ChatModel;
 }
 
 export function ChatList({
   messages,
   isMobile,
+  selectedChat,
 }: ChatListProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +95,7 @@ export function ChatList({
           })}
         </AnimatePresence>
       </ChatMessageList>
-      <ChatBottombar isMobile={isMobile} />
+      <ChatBottombar isMobile={isMobile} selectedChat={selectedChat} />
     </div>
   );
 }

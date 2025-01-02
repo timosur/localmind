@@ -9,7 +9,7 @@ server:
   args:
   - mcp-server-sqlite
   - --db-path
-  - /Users/timosur/code/standalone-mcp-chat/test.db
+  - /Users/timosur/code/standalone-mcp-chat/backend/db.sqlite
 - name: memory
   command: npx
   args:

@@ -18,6 +18,7 @@ export function Chat({ selectedChat, isMobile }: ChatProps) {
       <ChatList
         messages={messagesState}
         isMobile={isMobile}
+        selectedChat={selectedChat}
       />
     </div>
   );

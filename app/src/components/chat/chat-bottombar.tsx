@@ -13,19 +13,21 @@ import { Message } from "@/model/message";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ChatInput } from "../ui/chat/chat-input";
 import useChatStore from "@/hooks/useChatStore";
+import { Chat as ChatModel } from "@/model/chat";
 
 interface ChatBottombarProps {
   isMobile: boolean;
+  selectedChat: ChatModel;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
-export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
+export default function ChatBottombar({ isMobile, selectedChat }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const ws = useRef<WebSocket | null>(null);
-  const wsUrl = "ws://localhost:8000/chat";
+  const wsUrl = "ws://localhost:8000/chat?id=" + selectedChat.id;
 
   const storeNewMessage = (newMessage: Message) => {
     useChatStore.setState((state) => ({

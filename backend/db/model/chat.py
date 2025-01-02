@@ -14,6 +14,7 @@ class ChatMessage(Base):
   type = Column(String)
   isLoading = Column(Boolean)
   content = Column(String)
+  interaction_history = Column(String)
   timestamp = Column(String, default=lambda: datetime.now().isoformat())
 
   def to_dict(self):
