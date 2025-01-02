@@ -1,21 +1,19 @@
 import { cn } from "@/lib/utils";
-import { Chat } from "@/model/chat";
 import { Info } from "lucide-react";
 import { buttonVariants } from "../ui/button";
 import { ExpandableChatHeader } from "../ui/chat/expandable-chat";
-
-interface ChatTopbarProps {
-  selectedChat: Chat;
-}
+import useChatStore from "@/hooks/useChatStore";
 
 export const TopbarIcons = [{ icon: Info }];
 
-export default function ChatTopbar({ selectedChat }: ChatTopbarProps) {
+export default function ChatTopbar() {
+  const selectedChat = useChatStore((state) => state.selectedChat);
+
   return (
     <ExpandableChatHeader>
       <div className="flex items-center gap-2">
         <div className="flex flex-col">
-          <span className="font-medium">{selectedChat.title}</span>
+          <span className="font-medium">{selectedChat?.title}</span>
         </div>
       </div>
 

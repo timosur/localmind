@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -7,20 +7,25 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { chatData } from "@/_data";
+import useChatStore from "@/hooks/useChatStore";
 
 interface ChatLayoutProps {
   navCollapsedSize: number;
   defaultCollapsed?: boolean;
 }
 
+const fetchChats = (): Promise<any[]> =>
+  fetch("http://localhost:8000/chat").then((res) => res.json());
+
 export function ChatLayout({
   navCollapsedSize,
   defaultCollapsed = false,
 }: ChatLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [selectedChat, setSelectedChat] = React.useState(chatData[0]);
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
+  const [chats, setChats] = useState<any[]>([]);
+
+  const setSelectedChat = useChatStore((state) => state.setSelectedChat);
 
   useEffect(() => {
     const checkScreenWidth = () => {
@@ -32,6 +37,11 @@ export function ChatLayout({
 
     // Event listener for screen width changes
     window.addEventListener("resize", checkScreenWidth);
+
+    fetchChats().then((chats) => {
+      setChats(chats);
+      setSelectedChat(chats[3]);
+    });
 
     // Cleanup the event listener on component unmount
     return () => {
@@ -63,11 +73,11 @@ export function ChatLayout({
       >
         <Sidebar
           isCollapsed={isCollapsed || isMobile}
-          chats={chatData.map((chat) => ({
+          chats={chats?.map((chat) => ({
             id: chat.id,
-            title: chat.title,
-            messages: chat.messages ?? [],
-            variant: selectedChat.id === chat.id ? "secondary" : "ghost",
+            title: "Chat " + chat.id,
+            messages: [],
+            variant: "secondary",
           }))}
           isMobile={isMobile}
         />
@@ -75,7 +85,6 @@ export function ChatLayout({
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={480} minSize={30}>
         <Chat
-          selectedChat={selectedChat}
           isMobile={isMobile}
         />
       </ResizablePanel>

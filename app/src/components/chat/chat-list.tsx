@@ -1,4 +1,3 @@
-import { Message } from "@/model/message";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
@@ -13,27 +12,26 @@ import { ChatMessageList } from "../ui/chat/chat-message-list";
 import ChatBottombar from "./chat-bottombar";
 import { PersonIcon, DesktopIcon } from "@radix-ui/react-icons";
 import ReactMarkdown from 'react-markdown';
-import { Chat as ChatModel } from "@/model/chat";
+import useChatStore from "@/hooks/useChatStore";
 
 interface ChatListProps {
-  messages: Message[];
   isMobile: boolean;
-  selectedChat: ChatModel;
 }
 
 export function ChatList({
-  messages,
   isMobile,
-  selectedChat,
 }: ChatListProps) {
+  const selectedChat = useChatStore((state) => state.selectedChat);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  console.log(selectedChat)
 
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
         messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messagesContainerRef, selectedChat]);
 
   const actionIcons = [
     { icon: DotsVerticalIcon, type: "More" },
@@ -43,7 +41,7 @@ export function ChatList({
     <div className="w-full overflow-y-auto h-full flex flex-col">
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
-          {messages.map((message, index) => {
+          {selectedChat ? selectedChat.messages.map((message, index) => {
             return (
               <motion.div
                 key={index}
@@ -92,10 +90,10 @@ export function ChatList({
                 </ChatBubble>
               </motion.div>
             );
-          })}
+          }) : null}
         </AnimatePresence>
       </ChatMessageList>
-      <ChatBottombar isMobile={isMobile} selectedChat={selectedChat} />
+      <ChatBottombar isMobile={isMobile} />
     </div>
   );
 }

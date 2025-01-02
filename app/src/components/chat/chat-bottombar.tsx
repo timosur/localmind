@@ -13,37 +13,35 @@ import { Message } from "@/model/message";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ChatInput } from "../ui/chat/chat-input";
 import useChatStore from "@/hooks/useChatStore";
-import { Chat as ChatModel } from "@/model/chat";
 
 interface ChatBottombarProps {
   isMobile: boolean;
-  selectedChat: ChatModel;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
-export default function ChatBottombar({ isMobile, selectedChat }: ChatBottombarProps) {
+export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const appendMessage = useChatStore((state) => state.appendMessage);
   const ws = useRef<WebSocket | null>(null);
-  const wsUrl = "ws://localhost:8000/chat?id=" + selectedChat.id;
+  const selectedChat = useChatStore((state) => state.selectedChat);
 
-  const storeNewMessage = (newMessage: Message) => {
-    useChatStore.setState((state) => ({
-      messages: [...state.messages, newMessage],
-    }));
-  };
+  console.log(selectedChat)
 
   useEffect(() => {
-    connectWebSocket();
+    if (selectedChat && selectedChat.id) {
+      connectWebSocket();
+    }
     return () => {
       if (ws.current) ws.current.close();
     };
-  }, [wsUrl]);
+  }, [selectedChat?.id]);
 
   const connectWebSocket = () => {
     console.log("Connecting to WebSocket...");
+    const wsUrl = "ws://localhost:8000/chat?id=" + selectedChat!.id;
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
@@ -58,7 +56,7 @@ export default function ChatBottombar({ isMobile, selectedChat }: ChatBottombarP
         setIsLoading(false);
       }
 
-      storeNewMessage(message);
+      appendMessage(message);
     };
 
     ws.current.onclose = () => {

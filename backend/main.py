@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 import uvicorn
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketState
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -30,6 +31,14 @@ logging.basicConfig(
 
 app = FastAPI()
 
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=["*"],
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
+
 # Create the database tables
 Base.metadata.create_all(sync_engine)
 
@@ -39,24 +48,26 @@ async def list_chats(session: AsyncSession = Depends(get_async_session)):
   stmt = select(Chat).options(selectinload(Chat.messages))
   result = await session.execute(stmt)
   chats = result.scalars().all()
-  return {"chats": chats}
+
+  return chats
 
 
 @app.post("/chat")
 async def create_chat(session: AsyncSession = Depends(get_async_session)):
-  # Create new empty chat and redirect to websocket chat
   chat = Chat()
   session.add(chat)
   await session.commit()
-  return {"chat_id": chat.id}
+
+  return chat.id
 
 
 @app.get("/chat/{chat_id}")
 async def get_chat(chat_id: str, session: AsyncSession = Depends(get_async_session)):
-  stmt = select(Chat).filter(Chat.id == chat_id)
+  stmt = select(Chat).options(selectinload(Chat.messages)).filter(Chat.id == chat_id)
   result = await session.execute(stmt)
   chat = result.scalars().first()
-  return {"chat": chat}
+
+  return chat
 
 
 # Create server parameters for stdio connection
@@ -96,10 +107,6 @@ async def chat(
 
   try:
     await websocket.accept()
-
-    # Send existing messages to the client
-    for message in messages:
-      await websocket.send_json(message.to_dict())
 
     async with AsyncExitStack() as stack:
       # Connect to all servers and set up client sessions
