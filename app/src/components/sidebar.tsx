@@ -19,11 +19,11 @@ interface SidebarProps {
     messages: Message[];
     variant: "secondary" | "ghost";
   }[];
-  onClick?: () => void;
+  createAction?: () => void;
   isMobile: boolean;
 }
 
-export function Sidebar({ chats, isCollapsed, isMobile }: SidebarProps) {
+export function Sidebar({ chats, isCollapsed, createAction }: SidebarProps) {
   return (
     <div
       data-collapsed={isCollapsed}
@@ -36,26 +36,8 @@ export function Sidebar({ chats, isCollapsed, isMobile }: SidebarProps) {
             <span className="text-zinc-300">({chats.length})</span>
           </div>
 
-          <div>
-            <a
-              href="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-              )}
-            >
-              <MoreHorizontal size={20} />
-            </a>
-
-            <a
-              href="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-              )}
-            >
-              <SquarePen size={20} />
-            </a>
+          <div className="cursor-pointer">
+            <SquarePen onClick={createAction} size={20} />
           </div>
         </div>
       )}
@@ -66,7 +48,7 @@ export function Sidebar({ chats, isCollapsed, isMobile }: SidebarProps) {
               <Tooltip key={index} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <a
-                    href="#"
+                    href={`/chat/${chat.id}`}
                     className={cn(
                       buttonVariants({ variant: chat.variant, size: "icon" }),
                       "h-11 w-11 md:h-16 md:w-16",
@@ -88,7 +70,7 @@ export function Sidebar({ chats, isCollapsed, isMobile }: SidebarProps) {
           ) : (
             <a
               key={index}
-              href="#"
+              href={`/chat/${chat.id}`}
               className={cn(
                 buttonVariants({ variant: chat.variant, size: "xl" }),
                 chat.variant === "secondary" &&

@@ -1,7 +1,6 @@
 // Import necessary hooks and libraries
 import { createContext, useCallback, useContext, useEffect, ReactNode } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useQueryClient } from "@tanstack/react-query";
 import useChatStore from "./useChatStore";
 
 // Define the type for the chat messages context
@@ -11,9 +10,7 @@ interface ChatMessagesContextType {
 }
 
 // Create a context for chat messages
-const ChatMessagesContext = createContext<ChatMessagesContextType | null>(null);
-
-export const queryKey = ["chat_messages"];
+const ChatMessagesContext = createContext<ChatMessagesContextType>(null!);
 
 // Define the ChatMessagesProvider component to provide chat messages context
 interface ChatMessagesProviderProps {
@@ -22,21 +19,19 @@ interface ChatMessagesProviderProps {
 
 export const ChatMessagesProvider = ({ children }: ChatMessagesProviderProps) => {
   const selectedChat = useChatStore((state) => state.selectedChat);
+  const appendMessage = useChatStore((state) => state.appendMessage);
 
-  if (!selectedChat) {
-    return null;
-  }
+  const shouldConnect = !!selectedChat && selectedChat.id !== null;
 
   // Initialize the WebSocket connection and retrieve necessary properties
   const {
     sendMessage: sM,
     lastMessage,
     readyState,
-  } = useWebSocket("ws://localhost:8000/chat?id=" + selectedChat!.id, {
+  } = useWebSocket("ws://localhost:8000/chat?id=" + selectedChat?.id, {
     shouldReconnect: () => true,
-  });
-  // Initialize the queryClient from react-query
-  const queryClient = useQueryClient();
+  }, shouldConnect);
+
   // Check if WebSocket connection is open and ready for sending messages
   const canSendMessages = readyState === ReadyState.OPEN;
 
@@ -45,11 +40,9 @@ export const ChatMessagesProvider = ({ children }: ChatMessagesProviderProps) =>
     if (lastMessage && lastMessage.data) {
       const payload = JSON.parse(lastMessage.data);
       // Update the local chat messages state based on the message type
-      queryClient.setQueryData(queryKey, (oldData: any) => {
-        return [...oldData, payload];
-      });
+      appendMessage(payload);
     }
-  }, [lastMessage, queryClient]);
+  }, [lastMessage]);
 
   // Define the sendMessage function to send messages through the WebSocket connection
   const sendMessage = useCallback(

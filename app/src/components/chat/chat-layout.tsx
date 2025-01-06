@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
 import useChatStore from "@/hooks/useChatStore";
+import { useParams } from "react-router-dom";
 
 interface ChatLayoutProps {
   navCollapsedSize: number;
@@ -21,11 +22,12 @@ export function ChatLayout({
   navCollapsedSize,
   defaultCollapsed = false,
 }: ChatLayoutProps) {
+  const { id } = useParams();
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [isMobile, setIsMobile] = useState(false);
   const [chats, setChats] = useState<any[]>([]);
-
   const setSelectedChat = useChatStore((state) => state.setSelectedChat);
+  const createChat = useChatStore((state) => state.createChat);
 
   useEffect(() => {
     const checkScreenWidth = () => {
@@ -40,14 +42,14 @@ export function ChatLayout({
 
     fetchChats().then((chats) => {
       setChats(chats);
-      setSelectedChat(chats[3]);
+      setSelectedChat(chats.find((chat) => chat.id === id));
     });
 
     // Cleanup the event listener on component unmount
     return () => {
       window.removeEventListener("resize", checkScreenWidth);
     };
-  }, []);
+  }, [id]);
 
   return (
     <ResizablePanelGroup
@@ -80,6 +82,7 @@ export function ChatLayout({
             variant: "secondary",
           }))}
           isMobile={isMobile}
+          createAction={createChat}
         />
       </ResizablePanel>
       <ResizableHandle withHandle />

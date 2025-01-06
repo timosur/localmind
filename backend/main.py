@@ -58,7 +58,7 @@ async def create_chat(session: AsyncSession = Depends(get_async_session)):
   session.add(chat)
   await session.commit()
 
-  return chat.id
+  return chat
 
 
 @app.get("/chat/{chat_id}")

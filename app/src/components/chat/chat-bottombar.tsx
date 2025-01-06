@@ -9,10 +9,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Message } from "@/model/message";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ChatInput } from "../ui/chat/chat-input";
-import useChatStore from "@/hooks/useChatStore";
+import { useChatMessagesContext } from "@/hooks/useChatMessageContext";
 
 interface ChatBottombarProps {
   isMobile: boolean;
@@ -23,64 +22,27 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const appendMessage = useChatStore((state) => state.appendMessage);
-  const ws = useRef<WebSocket | null>(null);
-  const selectedChat = useChatStore((state) => state.selectedChat);
 
-  console.log(selectedChat)
-
-  useEffect(() => {
-    if (selectedChat && selectedChat.id) {
-      connectWebSocket();
-    }
-    return () => {
-      if (ws.current) ws.current.close();
-    };
-  }, [selectedChat?.id]);
-
-  const connectWebSocket = () => {
-    console.log("Connecting to WebSocket...");
-    const wsUrl = "ws://localhost:8000/chat?id=" + selectedChat!.id;
-    ws.current = new WebSocket(wsUrl);
-
-    ws.current.onopen = () => {
-      console.log("Connected to WebSocket");
-      setIsLoading(false);
-    };
-
-    ws.current.onmessage = (event) => {
-      const message = JSON.parse(event.data) as Message;
-
-      if ((message.role === "assistent" || message.role === "system") && (message.type === "error" || message.type === "message")) {
-        setIsLoading(false);
-      }
-
-      appendMessage(message);
-    };
-
-    ws.current.onclose = () => {
-      console.log("WebSocket closed.");
-    };
-  };
+  const { sendMessage, canSendMessages } = useChatMessagesContext();
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(event.target.value);
   };
 
   const handleSend = () => {
-    if (message.trim()) {
-      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        ws.current.send(message.trim());
-        setMessage("");
-        setIsLoading(true);
-      } else {
-        console.error("WebSocket is not open.");
-      }
+    if (!message.trim()) {
+      return;
+    }
 
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+    if (canSendMessages) {
+      sendMessage(message);
+      setMessage("");
+    } else {
+      console.error("WebSocket is not open.");
+    }
+
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
 
@@ -201,6 +163,7 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
             onChange={handleInputChange}
             placeholder="Type a message..."
             className="rounded-full"
+            disabled={!canSendMessages}
           />
         </motion.div>
 
@@ -208,7 +171,7 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
           <Button
             className="h-9 w-9 shrink-0"
             onClick={handleSend}
-            disabled={isLoading}
+            disabled={!canSendMessages}
             variant="ghost"
             size="icon"
           >

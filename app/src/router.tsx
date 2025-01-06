@@ -1,22 +1,27 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { RootLayout } from "@/layout";
-import { NotFound } from "@/pages/NotFound";
 import { Chat } from "@/pages/Chat";
+import { RootLayout } from "./layout";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <RootLayout />,
+    element: <RootLayout></RootLayout>,
     children: [
       {
-        path: "",
+        path: "chat",
         element: <Chat></Chat>,
+        children: [
+          {
+            path: ":id",
+            element: <Chat></Chat>,
+          },
+        ],
       },
     ],
   },
   {
     path: "*",
-    element: <NotFound />,
+    element: <RootLayout></RootLayout>,
   },
 ])

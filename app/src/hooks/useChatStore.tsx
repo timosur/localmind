@@ -5,7 +5,7 @@ import { create } from "zustand";
 const fetchChats = (): Promise<Chat[]> =>
   fetch("http://localhost:8000/chat").then((res) => res.json());
 
-const createChat = (): Promise<void> =>
+const createChat = (): Promise<Chat> =>
   fetch("http://localhost:8000/chat", {
     method: "POST",
   }).then((res) => res.json());
@@ -43,9 +43,8 @@ const useChatStore = create<ChatState>()((set) => ({
   setSelectedChat: (selectedChat) => set({ selectedChat }),
 
   createChat: async () => {
-    await createChat();
-    const chats = await fetchChats();
-    set({ chats });
+    const newChat = await createChat();
+    location.href = "/chat/" + newChat.id;
   },
   appendMessage: (message: Message) => set((state) => ({
     selectedChat: {
