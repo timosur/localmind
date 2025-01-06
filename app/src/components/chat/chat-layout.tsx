@@ -77,7 +77,7 @@ export function ChatLayout({
           isCollapsed={isCollapsed || isMobile}
           chats={chats?.map((chat) => ({
             id: chat.id,
-            title: "Chat " + chat.id,
+            title: chat.title,
             messages: [],
             variant: "secondary",
           }))}

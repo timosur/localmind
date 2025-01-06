@@ -3,7 +3,7 @@ import logging
 import json
 from contextlib import AsyncExitStack
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 import uvicorn
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
@@ -54,7 +54,17 @@ async def list_chats(session: AsyncSession = Depends(get_async_session)):
 
 @app.post("/chat")
 async def create_chat(session: AsyncSession = Depends(get_async_session)):
+  # Check if chat with name "New Chat" already exists
+  stmt = select(Chat).filter(Chat.title.contains("New Chat"))
+  result = await session.execute(stmt)
+  chats_with_no_title = len(result.scalars().all())
+  new_title = "New Chat"
+
+  if chats_with_no_title > 0:
+    new_title = f"New Chat ({chats_with_no_title})"
+
   chat = Chat()
+  chat.title = new_title
   session.add(chat)
   await session.commit()
 

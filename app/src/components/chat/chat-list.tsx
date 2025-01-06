@@ -41,7 +41,17 @@ export function ChatList({
     <div className="w-full overflow-y-auto h-full flex flex-col">
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
-          {selectedChat ? selectedChat.messages.map((message, index) => {
+          {!selectedChat && (
+            <div>
+              <p>Select a chat to start messaging</p>
+            </div>
+          )}
+          {selectedChat && selectedChat.messages.length === 0 && (
+            <div>
+              <p>No messages in this chat yet</p>
+            </div>
+          )}
+          {selectedChat && selectedChat.messages.length > 0 ? selectedChat.messages.map((message, index) => {
             return (
               <motion.div
                 key={index}

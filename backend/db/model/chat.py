@@ -31,6 +31,7 @@ class ChatMessage(Base):
 class Chat(Base):
   __tablename__ = "chats"
   id = Column(String, primary_key=True, default=lambda: uuid.uuid4().hex)
+  title = Column(String)
   messages = relationship("ChatMessage", backref="chat")
 
   def to_dict(self):
