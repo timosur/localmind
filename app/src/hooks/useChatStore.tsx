@@ -1,7 +1,6 @@
 import { Chat } from "@/model/chat";
 import { Message } from "@/model/message";
 import { create } from "zustand";
-import { hook, effect, query, Query, Effect } from "leo-query";
 
 const fetchChats = (): Promise<Chat[]> =>
   fetch("http://localhost:8000/chat").then((res) => res.json());
@@ -14,7 +13,8 @@ const createChat = (): Promise<void> =>
 
 interface ChatState {
   input: string;
-  chats: Query<ChatState, Chat[]>;
+  chats: Chat[];
+  setChats: (chats: Chat[]) => void;
   selectedChat: Chat | null;
   setSelectedChat: (chat: Chat) => void;
   setInput: (input: string) => void;
@@ -23,7 +23,7 @@ interface ChatState {
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
-  createChat: Effect<ChatState, []>;
+  createChat: () => void;
   appendMessage: (message: Message) => void;
 }
 
@@ -37,11 +37,16 @@ const useChatStore = create<ChatState>()((set) => ({
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => set({ input: e.target.value }),
 
-  chats: query(fetchChats),
+  chats: [],
+  setChats: (chats) => set({ chats }),
   selectedChat: null,
   setSelectedChat: (selectedChat) => set({ selectedChat }),
 
-  createChat: effect(createChat),
+  createChat: async () => {
+    await createChat();
+    const chats = await fetchChats();
+    set({ chats });
+  },
   appendMessage: (message: Message) => set((state) => ({
     selectedChat: {
       ...state.selectedChat,
@@ -51,5 +56,3 @@ const useChatStore = create<ChatState>()((set) => ({
 }));
 
 export default useChatStore;
-
-export const useChatStoreAsync = hook(useChatStore);
