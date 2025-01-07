@@ -13,8 +13,7 @@ import {
 } from "../ui/chat/chat-bubble";
 import { ChatMessageList } from "../ui/chat/chat-message-list";
 import ChatBottombar from "./chat-bottombar";
-import { Terminal, TriangleAlertIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BotMessageSquareIcon, SwordIcon, SwordsIcon, Terminal, TriangleAlertIcon } from "lucide-react";
 
 interface ChatListProps {
   isMobile: boolean;
@@ -82,11 +81,16 @@ export function ChatList({
                 <ChatBubble variant={message.role === "user" ? "sent" : "received"}>
                   <ChatBubbleMessage isLoading={message.isLoading}>
                     <div className="mb-2">
-                      {message.role === "user" ? (
-                        <PersonIcon className="size-7" />
-                      ) : (
-                        <DesktopIcon className="size-7" />
+                      {message.role === "user" && <PersonIcon className="size-7" />}
+                      {message.role === "assistent" && message.type === "tool_call" && <SwordIcon className="size-7" />}
+                      {message.role === "assistent" && message.type === "tool_response" && <SwordsIcon className="size-7" />}
+                      {message.role === "assistent" && message.type === "message" && (
+                        <>
+                          <BotMessageSquareIcon className="size-7" />
+                          <small>AI Response, do not trust blindly</small>
+                        </>
                       )}
+                      {message.type === "error" && <TriangleAlertIcon className="size-7" />}
                     </div>
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                     <small><ChatBubbleTimestamp timestamp={new Date(message.timestamp!).toLocaleString()} /></small>

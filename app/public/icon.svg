@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="45" fill="#2D3748" />
+  
+  <!-- Brain circuits - representing AI/mind -->
+  <path d="M30 45 Q40 35, 50 45 T70 45" 
+        fill="none" 
+        stroke="#63B3ED" 
+        stroke-width="3"
+        stroke-linecap="round" />
+  
+  <path d="M30 55 Q40 65, 50 55 T70 55" 
+        fill="none" 
+        stroke="#63B3ED" 
+        stroke-width="3"
+        stroke-linecap="round" />
+  
+  <!-- Central node - representing local processing -->
+  <circle cx="50" cy="50" r="8" fill="#4299E1" />
+  
+  <!-- Connecting points -->
+  <circle cx="30" cy="45" r="4" fill="#4299E1" />
+  <circle cx="70" cy="45" r="4" fill="#4299E1" />
+  <circle cx="30" cy="55" r="4" fill="#4299E1" />
+  <circle cx="70" cy="55" r="4" fill="#4299E1" />
+</svg>

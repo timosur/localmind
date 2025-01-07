@@ -71,7 +71,7 @@ async def process_chat_message(
         yield (
           "assistent",
           "tool_call",
-          f"# Tool call\n\n{tool_call.function.name}\n\n## Arguments\n\n{tool_call.function.arguments}",
+          f"{tool_call.function.name}\n{tool_call.function.arguments}",
           [],
         )
 

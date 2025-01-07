@@ -21,7 +21,7 @@ class LLMClient:
       response = client.chat.completions.create(
         model=APP_CONFIG.openai.openai_chat_model,
         messages=messages,
-        tools=tools or [],
+        tools=tools or None,
       )
 
       # return the response

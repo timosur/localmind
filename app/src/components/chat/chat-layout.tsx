@@ -79,7 +79,7 @@ export function ChatLayout({
             id: chat.id,
             title: chat.title,
             messages: [],
-            variant: "secondary",
+            variant: chat.id === id ? "secondary" : "ghost",
           }))}
           isMobile={isMobile}
           createAction={createChat}

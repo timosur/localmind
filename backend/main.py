@@ -13,6 +13,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from llm.client import LLMClient
 from db.model.chat import Chat, ChatMessage
 from db import get_async_session
 from chat.handler import send_chat_message
@@ -92,25 +93,23 @@ async def chat(
   messages = []
 
   if id is None:
-    chat = Chat()
-    session.add(chat)
-    await session.commit()
-    id = chat.id
-  else:
-    stmt = select(Chat).filter(Chat.id == id)
-    result = await session.execute(stmt)
-    chat = result.scalars().first()
-    if chat is None:
-      return {"error": "Chat not found"}, 404
+    return {"error": "Chat ID not provided"}, 400
 
-    # Load all messages for the chat
-    stmt = select(ChatMessage).filter(ChatMessage.chat_id == id)
-    result = await session.execute(stmt)
-    messages = result.scalars().all()
+  stmt = select(Chat).filter(Chat.id == id)
+  result = await session.execute(stmt)
+  chat = result.scalars().first()
 
-    # Parse the interaction history from the messages
-    for message in messages:
-      chat_interaction_history.extend(json.loads(message.interaction_history))
+  if chat is None:
+    return {"error": "Chat not found"}, 404
+
+  # Load all messages for the chat
+  stmt = select(ChatMessage).filter(ChatMessage.chat_id == id)
+  result = await session.execute(stmt)
+  messages = result.scalars().all()
+
+  # Parse the interaction history from the messages
+  for message in messages:
+    chat_interaction_history.extend(json.loads(message.interaction_history))
 
   logging.debug(f"Chat ID: {id}")
   logging.debug(f"Chat Interaction History: {chat_interaction_history}")
@@ -159,6 +158,24 @@ async def chat(
         )
         session.add(message)
         await session.commit()
+
+        # Check if message were initially empty, if yes, update the title according to the first message
+        if len(messages) == 0 and role == "user":
+          client = LLMClient()
+          completion = client.create_completion(
+            messages=[
+              {
+                "role": "user",
+                "content": f"Create a title for the chat. This is the first message: {content}. Only provide a title, no other content. Do not wrap the title in quotes.",
+              }
+            ]
+          )
+
+          title_content = completion.get("response", "No response")
+
+          chat.title = title_content
+          session.add(chat)
+          await session.commit()
 
         return message.to_dict()
 

@@ -23,7 +23,7 @@ export function RootLayout() {
               href="/"
               className="text-xl sm:text-2xl md:text-4xl font-bold text-gradient"
             >
-              MCP LLM Chat
+              LocalMind
             </a>
           </div>
           <div className="flex gap-1 items-center">
