@@ -3,7 +3,7 @@ import logging
 import json
 from contextlib import AsyncExitStack
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 import uvicorn
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
