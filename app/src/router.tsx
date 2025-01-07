@@ -1,7 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { Chat } from "@/pages/Chat";
 import { RootLayout } from "./layout";
+import { Chat } from "@/pages/Chat";
+import { Start } from "@/pages/Start";
+import { Settings } from "@/pages/Settings";
 
 export const router = createBrowserRouter([
   {
@@ -9,15 +11,23 @@ export const router = createBrowserRouter([
     element: <RootLayout></RootLayout>,
     children: [
       {
+        path: "/",
+        element: <Start />,
+      },
+      {
         path: "chat",
-        element: <Chat></Chat>,
+        element: <Chat />,
         children: [
           {
             path: ":id",
-            element: <Chat></Chat>,
+            element: <Chat />,
           },
         ],
       },
+      {
+        path: "/settings",
+        element: <Settings />,
+      }
     ],
   },
   {

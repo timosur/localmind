@@ -20,7 +20,7 @@ export function RootLayout() {
         <div className="flex justify-between w-full items-center">
           <div className="flex gap-3 md:gap-6 items-center">
             <a
-              href="#"
+              href="/"
               className="text-xl sm:text-2xl md:text-4xl font-bold text-gradient"
             >
               MCP LLM Chat

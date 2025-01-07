@@ -67,7 +67,7 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
   return (
     <div className="px-2 py-4 flex justify-between w-full items-center gap-2">
       <div className="flex">
-        <Popover>
+        {/* <Popover>
           <PopoverTrigger asChild>
             <a
               href="#"
@@ -120,8 +120,8 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
               </a>
             )}
           </PopoverContent>
-        </Popover>
-        {!message.trim() && !isMobile && (
+        </Popover> */}
+        {/* {!message.trim() && !isMobile && (
           <div className="flex">
             {BottombarIcons.map((icon, index) => (
               <a
@@ -137,7 +137,7 @@ export default function ChatBottombar({ isMobile }: ChatBottombarProps) {
               </a>
             ))}
           </div>
-        )}
+        )} */}
       </div>
 
       <AnimatePresence initial={false}>

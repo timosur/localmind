@@ -1,6 +1,9 @@
-import { DotsVerticalIcon } from "@radix-ui/react-icons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import useChatStore from "@/hooks/useChatStore";
+import { DesktopIcon, DotsVerticalIcon, PersonIcon } from "@radix-ui/react-icons";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import ReactMarkdown from 'react-markdown';
 import {
   ChatBubble,
   ChatBubbleAction,
@@ -10,9 +13,8 @@ import {
 } from "../ui/chat/chat-bubble";
 import { ChatMessageList } from "../ui/chat/chat-message-list";
 import ChatBottombar from "./chat-bottombar";
-import { PersonIcon, DesktopIcon } from "@radix-ui/react-icons";
-import ReactMarkdown from 'react-markdown';
-import useChatStore from "@/hooks/useChatStore";
+import { Terminal, TriangleAlertIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatListProps {
   isMobile: boolean;
@@ -23,8 +25,6 @@ export function ChatList({
 }: ChatListProps) {
   const selectedChat = useChatStore((state) => state.selectedChat);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  console.log(selectedChat)
 
   useEffect(() => {
     if (messagesContainerRef.current) {
@@ -42,14 +42,22 @@ export function ChatList({
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
           {!selectedChat && (
-            <div>
-              <p>Select a chat to start messaging</p>
-            </div>
+            <Alert>
+              <TriangleAlertIcon className="h-5 w-5" />
+              <AlertTitle>Hey!</AlertTitle>
+              <AlertDescription>
+                Select an existing chat or create a new one to start messaging,
+              </AlertDescription>
+            </Alert>
           )}
           {selectedChat && selectedChat.messages.length === 0 && (
-            <div>
-              <p>No messages in this chat yet</p>
-            </div>
+            <Alert>
+              <Terminal className="h-5 w-5" />
+              <AlertTitle>Start chatting!</AlertTitle>
+              <AlertDescription>
+                Send your first message in this chat.
+              </AlertDescription>
+            </Alert>
           )}
           {selectedChat && selectedChat.messages.length > 0 ? selectedChat.messages.map((message, index) => {
             return (
