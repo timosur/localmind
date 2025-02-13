@@ -1,46 +1,20 @@
-# MCP Standalone Client
+# LocalMind
 
-## Backend
+LocalMind is an local LLM Chat App fully compatible with the Model Context Protocol.
+It uses Azure OpenAI as a LLM backend and you can connect it to all MCP Servers out there.
 
-Create `.env` in `backend` folder with
+## Development
 
-```
-OPENAI_API_KEY=xxx
-```
-
-Install dependencies
+To work on the frontend in browser with the python backend up and running:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+./dev.sh frontend-dev
 ```
 
-When you are done developing
+To run the Tauri App in development mode with the python backend:
 
 ```bash
-deactivate
-```
-
-To build the backend in one file for the frontend:
-
-```bash
-python3 -m PyInstaller main.py --onefile
-```
-
-## Frontend
-
-Create `.env` in `client` folder with
-
-```bash
-OPENAI_API_KEY=xxx
-```
-
-configure `server_config.json` to use your folders.
-
-```bash
-npm install
-npm start
+./dev.sh app-dev
 ```
 
 ## Important
