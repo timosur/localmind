@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from collections.abc import Sequence
 from typing import Any
 
@@ -7,37 +6,17 @@ from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
-from tools.allowed_directories import (
-  TOOL_SCHEMA as LIST_ALLOWED_DIRECTORIES_TOOL_SCHEMA,
-)
-from tools.allowed_directories import list_allowed_directories
-from tools.get_file_info import TOOL_SCHEMA as GET_FILE_INFO_TOOL_SCHEMA
-from tools.get_file_info import get_file_info
-from tools.list_directory import TOOL_SCHEMA as LIST_DIRECTORY_TOOL_SCHEMA
-from tools.list_directory import list_directory
 from tools.query_files import TOOL_SCHEMA as QUERY_EMBEDDED_FILES_TOOL_SCHEMA
 from tools.query_files import query_files
-from tools.search_files import TOOL_SCHEMA as SEARCH_FILES_TOOL_SCHEMA
-from tools.search_files import search_files
 
 # Create a server instance
 server = Server("filesystem-rag")
-
-# Parse allowed directories from command line arguments
-allowed_directories = []
-
-if len(sys.argv) > 1:
-  allowed_directories = sys.argv[1:]
 
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
   """List available tools."""
   return [
-    LIST_DIRECTORY_TOOL_SCHEMA,
-    GET_FILE_INFO_TOOL_SCHEMA,
-    SEARCH_FILES_TOOL_SCHEMA,
-    LIST_ALLOWED_DIRECTORIES_TOOL_SCHEMA,
     QUERY_EMBEDDED_FILES_TOOL_SCHEMA,
   ]
 
@@ -49,14 +28,6 @@ async def call_tool(
   """Handle tool calls."""
   try:
     match name:
-      case "list_directory":
-        return list_directory(arguments)
-      case "get_file_info":
-        return get_file_info(arguments)
-      case "search_files":
-        return search_files(arguments)
-      case "list_allowed_directories":
-        return list_allowed_directories(arguments, allowed_directories)
       case "query_files":
         return query_files(arguments)
       case _:
