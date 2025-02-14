@@ -179,6 +179,18 @@ async def chat(
 
         return message.to_dict()
 
+      async def wait_for_user_feedback():
+        while True:
+          try:
+            message = await websocket.receive_text()
+
+            if message == "reject":
+              return False
+            if message == "accept":
+              return True
+          except WebSocketDisconnect:
+            logging.info("Client disconnected while waiting for user feedback")
+
       while True:
         try:
           message = await websocket.receive_text()
@@ -186,6 +198,7 @@ async def chat(
           # Process the chat message and stream messages back to the client
           async for role, type, content, interaction_history in send_chat_message(
             client_sessions,
+            wait_for_user_feedback,
             user_message=message,
             chat_interaction_history=chat_interaction_history,
           ):

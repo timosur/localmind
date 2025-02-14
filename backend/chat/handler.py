@@ -8,7 +8,7 @@ from chat.system_prompt import generate as generate_system_prompt
 
 
 async def send_chat_message(
-  client_sessions, chat_interaction_history=[], user_message=""
+  client_sessions, wait_for_user_feedback, chat_interaction_history=[], user_message=""
 ):
   try:
     tools = []
@@ -29,6 +29,7 @@ async def send_chat_message(
       openai_tools,
       chat_interaction_history,
       user_message,
+      wait_for_user_feedback,
     ):
       yield (role, type, content, interaction_history)
 
@@ -43,6 +44,7 @@ async def process_chat_message(
   openai_tools,
   chat_interaction_history,
   user_message,
+  wait_for_user_feedback,
 ):
   client = LLMClient()
   conversation_history = [
@@ -71,23 +73,41 @@ async def process_chat_message(
         yield (
           "assistent",
           "tool_call",
-          f"{tool_call.function.name}\n{tool_call.function.arguments}",
+          f"{tool_call.function.name}\n{tool_call.function.arguments}\n\nPlease approve the call by typing 'accept' or reject by typing 'reject'",
           [],
         )
 
-        formatted_response, tool_interaction_history = await handle_tool_call(
-          tool_call, conversation_history, client_sessions
-        )
+        # Wait for user feedback
+        user_feedback = await wait_for_user_feedback()
 
-        yield (
-          "assistent",
-          "tool_response",
-          formatted_response,
-          tool_interaction_history,
-        )
+        if user_feedback:
+          formatted_response, tool_interaction_history = await handle_tool_call(
+            tool_call, conversation_history, client_sessions
+          )
 
-        # Append new history to the conversation
-        conversation_history.extend(tool_interaction_history)
+          yield (
+            "assistent",
+            "tool_response",
+            formatted_response,
+            tool_interaction_history,
+          )
+
+          # Append new history to the conversation
+          conversation_history.extend(tool_interaction_history)
+        else:
+          yield ("system", "info", "Tool call declined by user", [])
+
+          # Append new history to the conversation
+          conversation_history.extend(
+            [
+              {
+                "role": "system",
+                "content": "Tool call declined by user. Do not use the tool.",
+              }
+            ]
+          )
+
+          return
 
       continue
 
