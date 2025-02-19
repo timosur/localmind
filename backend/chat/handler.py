@@ -7,7 +7,7 @@ from tools.tools_handler import convert_to_openai_tools, fetch_tools, handle_too
 from chat.system_prompt import generate as generate_system_prompt
 
 
-async def send_chat_message(
+async def handle_chat_message(
   client_sessions, wait_for_user_feedback, chat_interaction_history=[], user_message=""
 ):
   try:
@@ -58,6 +58,7 @@ async def process_chat_message(
   yield ("user", "message", user_message, user_interaction_history)
 
   conversation_history.extend(user_interaction_history)
+  chat_interaction_history.extend(user_interaction_history)
 
   while True:
     # Process chat message
@@ -94,18 +95,19 @@ async def process_chat_message(
 
           # Append new history to the conversation
           conversation_history.extend(tool_interaction_history)
+          chat_interaction_history.extend(tool_interaction_history)
         else:
           yield ("system", "info", "Tool call declined by user", [])
 
           # Append new history to the conversation
-          conversation_history.extend(
-            [
-              {
-                "role": "system",
-                "content": "Tool call declined by user. Do not use the tool.",
-              }
-            ]
-          )
+          declined_history = [
+            {
+              "role": "system",
+              "content": "Tool call declined by user. Do not use the tool.",
+            }
+          ]
+          conversation_history.extend(declined_history)
+          chat_interaction_history.extend(declined_history)
 
           return
 
@@ -117,5 +119,6 @@ async def process_chat_message(
     yield ("assistent", "message", response_content, assistant_interaction_history)
 
     conversation_history.extend(assistant_interaction_history)
+    chat_interaction_history.extend(assistant_interaction_history)
 
     return

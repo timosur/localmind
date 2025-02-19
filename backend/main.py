@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from llm.client import LLMClient
 from db.model.chat import Chat, ChatMessage
 from db import get_async_session
-from chat.handler import send_chat_message
+from chat.handler import handle_chat_message
 from config import APP_CONFIG
 from db.model import Base
 from db import sync_engine
@@ -196,7 +196,7 @@ async def chat(
           message = await websocket.receive_text()
 
           # Process the chat message and stream messages back to the client
-          async for role, type, content, interaction_history in send_chat_message(
+          async for role, type, content, interaction_history in handle_chat_message(
             client_sessions,
             wait_for_user_feedback,
             user_message=message,
